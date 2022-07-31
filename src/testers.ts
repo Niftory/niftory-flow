@@ -28,6 +28,11 @@ const assertScriptValue =
     return result
   }
 
+const log = <T>(result: ScriptResult<T>): ScriptResult<T> => {
+  console.log(result)
+  return result
+}
+
 // =============================================================================
 
 const checkSuccessfulTransactions =
@@ -66,6 +71,7 @@ export {
   checkScriptFailed,
   checkScriptValue,
   assertScriptValue,
+  log,
   checkScriptSucceeded,
   initAccount,
 }

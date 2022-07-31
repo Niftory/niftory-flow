@@ -19,6 +19,7 @@ class ContractAccount extends AnyActor<ContractAccountConfig, ContractAccount> {
   deployMutableMetadataTemplate = noArg(this.deploy('MutableMetadataTemplate'))
   deployMutableSet = noArg(this.deploy('MutableSet'))
   deployMutableSetManager = noArg(this.deploy('MutableSetManager'))
+  deployMetadataViewsManager = noArg(this.deploy('MetadataViewsManager'))
   deployNiftory = noArg(this.deploy('Niftory'))
 }
 
@@ -36,6 +37,27 @@ class BrandManager extends AnyActor<BrandManagerConfig, BrandManager> {
 
 const brandManager = (name: string): BrandManager =>
   new BrandManager({ name, context, config: {} })
+
+// =============================================================================
+
+type NiftoryAdminConfig = {}
+
+class NiftoryAdmin extends AnyActor<NiftoryAdminConfig, NiftoryAdmin> {
+  getThis = (_) => new NiftoryAdmin(_)
+  deployNFTRegistry = noArg(this.deploy('NFTRegistry'))
+  initialize = this.send<{}>('niftory_admin/initialize')
+  register_brand = this.send<{ brand: string }>(
+    'niftory_admin/register_brand',
+    (_) => [_.brand],
+  )
+  deregister_brand = this.send<{ brand: string }>(
+    'niftory_admin/deregister_brand',
+    (_) => [_.brand],
+  )
+}
+
+const niftoryAdmin = (name: string): NiftoryAdmin =>
+  new NiftoryAdmin({ name, context, config: {} })
 
 // =============================================================================
 
@@ -88,6 +110,69 @@ class SetManagerAdmin extends AnyActor<SetManagerAdminConfig, SetManagerAdmin> {
 
 const setManagerAdmin = (name: string, path: string): SetManagerAdmin =>
   new SetManagerAdmin({ name, context, config: { path } })
+
+// =============================================================================
+
+type MetadataViewsManagerAdminConfig = {
+  path: string
+}
+
+class MetadataViewsManagerAdmin extends AnyActor<
+  MetadataViewsManagerAdminConfig,
+  MetadataViewsManagerAdmin
+> {
+  getThis = (_) => new MetadataViewsManagerAdmin(_)
+  set_royalty_resolver = this.send<{
+    receiverAddress: string
+    receiverPath: string
+    cut: string
+    description: string
+  }>('metadataviews_manager_admin/set_royalty_resolver', (_) => [
+    _.path,
+    _.receiverAddress,
+    _.receiverPath,
+    _.cut,
+    _.description,
+  ])
+  set_ipfs_display_resolver = this.send<{
+    titleField: string
+    descriptionField: string
+    ipfsImageField: string
+    defaultTitle: string
+    defaultDescription: string
+    defaultIpfsImage: string
+  }>('metadataviews_manager_admin/set_ipfs_display_resolver', (_) => [
+    _.path,
+    _.titleField,
+    _.descriptionField,
+    _.ipfsImageField,
+    _.defaultTitle,
+    _.defaultDescription,
+    _.defaultIpfsImage,
+  ])
+  set_collection_data_resolver = this.send<{}>(
+    'metadataviews_manager_admin/set_collection_data_resolver',
+    (_) => [_.path],
+  )
+  remove_collection_data_resolver = this.send<{}>(
+    'metadataviews_manager_admin/remove_collection_data_resolver',
+    (_) => [_.path],
+  )
+  remove_ipfs_display_resolver = this.send<{}>(
+    'metadataviews_manager_admin/remove_ipfs_display_resolver',
+    (_) => [_.path],
+  )
+  remove_royalty_resolver = this.send<{}>(
+    'metadataviews_manager_admin/remove_royalty_resolver',
+    (_) => [_.path],
+  )
+}
+
+const metadataViewsManagerAdmin = (
+  name: string,
+  path: string,
+): MetadataViewsManagerAdmin =>
+  new MetadataViewsManagerAdmin({ name, context, config: { path } })
 
 // =============================================================================
 
@@ -193,15 +278,24 @@ const flow = () => ({
     }),
 })
 
+const niftory = (address: string) => ({
+  brands: () =>
+    execute({
+      codePath: 'niftory/brands',
+      args: [address],
+      decoder: (data: any) => data,
+    }),
+})
+
 const mutable_set_manager = (address: string, path: string) => ({
   info: () =>
     execute({
       codePath: 'mutable_set_manager/info',
       args: [address, path],
       decoder: (data: any) => ({
-        name: data.name,
-        description: data.description,
-        numSets: data.numSets,
+        name: data.name as string,
+        description: data.description as string,
+        numSets: Number(data.numSets),
       }),
     }),
 })
@@ -264,15 +358,49 @@ const collection = (address: string, path: string) => ({
         views: data.views as string[],
       }),
     }),
+  royalty: (id: number) =>
+    execute({
+      codePath: 'collection/royalty',
+      args: [address, path, id],
+      decoder: (data: any) => ({
+        token: data.token as string,
+        receiverPath: data.receiverPath as string,
+        cut: Number(data.cut),
+        description: data.description as string,
+      }),
+    }),
+  display: (id: number) =>
+    execute({
+      codePath: 'collection/display',
+      args: [address, path, id],
+      decoder: (data: any) => ({
+        name: data.name as string,
+        description: data.description as string,
+        thumbnail: data.thumbnail as string,
+      }),
+    }),
+  collection_data: (id: number) =>
+    execute({
+      codePath: 'collection/collection_data',
+      args: [address, path, id],
+      decoder: (data: any) => ({
+        storagePath: data.storagePath as string,
+        publicPath: data.publicPath as string,
+        providerPath: data.providerPath as string,
+      }),
+    }),
 })
 
 export {
+  niftoryAdmin,
   contractAccount,
   brandManager,
   setManagerAdmin,
   setAdmin,
   templateAdmin,
+  niftory,
   collector,
+  metadataViewsManagerAdmin,
   flow,
   mutable_set_manager,
   mutable_set,

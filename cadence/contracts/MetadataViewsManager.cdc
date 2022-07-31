@@ -1,22 +1,20 @@
-import FungibleToken from "./FungibleToken.cdc"
-import NonFungibleToken from "./NonFungibleToken.cdc"
 import MetadataViews from "./MetadataViews.cdc"
 
 pub contract MetadataViewsManager {
 
   pub resource interface Resolver {
     pub let type: Type
-    pub fun resolve(_ nftRef: &NonFungibleToken.NFT): AnyStruct?
+    pub fun resolve(_ nftRef: AnyStruct): AnyStruct?
   }
 
   pub resource interface ManagerPublic {
     pub fun getViews(): [Type]
-    pub fun resolveView(view: Type, nftRef: &NonFungibleToken.NFT): AnyStruct?
+    pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct?
   }
 
   pub resource interface ManagerPrivate {
     pub fun getViews(): [Type]
-    pub fun resolveView(view: Type, nftRef: &NonFungibleToken.NFT): AnyStruct?
+    pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct?
 
     pub fun addResolver(_ resolver: @{Resolver})
     pub fun removeResolver(type: Type)
@@ -46,7 +44,7 @@ pub contract MetadataViewsManager {
       return self._resolvers.keys
     }
 
-    pub fun resolveView(view: Type, nftRef: &NonFungibleToken.NFT): AnyStruct? {
+    pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct? {
       let resolverRef = &self._resolvers[view] as &{Resolver}?
       if (resolverRef == nil) {
         return nil

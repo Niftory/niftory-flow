@@ -5,18 +5,11 @@ import MutableMetadata from "./MutableMetadata.cdc"
 import MutableSet from "./MutableSet.cdc"
 import MutableSetManager from "./MutableSetManager.cdc"
 
-// import MetadataViewsManager from "./MetadataViewsManager.cdc"
+import MetadataViewsManager from "./MetadataViewsManager.cdc"
 
 pub contract Niftory {
 
-  // Standard location where every Minter will be located 
-  pub let StandardMinterPrivatePath: PrivatePath
-  pub let StandardMinterPath: StoragePath
-
-  // Standard location where every Set Manager should be located
-  pub let StandardSetManagerPublicPath: PublicPath
-  pub let StandardSetManagerPrivatePath: PrivatePath
-  pub let StandardSetManagerPath: StoragePath
+  //=========================================================================
 
   pub resource interface NFTPublic {
     pub let id: UInt64
@@ -26,9 +19,32 @@ pub contract Niftory {
     pub fun set(): &MutableSet.Set{MutableSet.SetPublic}
     pub fun getViews(): [Type]
     pub fun resolveView(_ view: Type): AnyStruct?
+    pub fun SetManagerPublic():
+        Capability<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>
+    pub fun NFTCollectionData(): MetadataViews.NFTCollectionData
   }
 
-  pub resource interface MinterPrivate {
+  //=========================================================================
+
+  pub resource interface ManagerPublic {
+    pub fun SetManagerPublic():
+      Capability<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>
+    pub fun NFTCollectionData(): MetadataViews.NFTCollectionData
+    pub fun MetadataViewsManagerPublic():
+      Capability<
+        &MetadataViewsManager.Manager{MetadataViewsManager.ManagerPublic}
+      >
+  }
+
+  pub resource interface ManagerPrivate {
+    pub fun SetManagerPublic():
+      Capability<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>
+    pub fun NFTCollectionData(): MetadataViews.NFTCollectionData
+    pub fun MetadataViewsManagerPublic():
+      Capability<
+        &MetadataViewsManager.Manager{MetadataViewsManager.ManagerPublic}
+      >
+
     pub fun mint(
       metadataAccessor: MutableSetManager.MetadataAccessor,
     ): @NonFungibleToken.NFT
@@ -37,6 +53,8 @@ pub contract Niftory {
       numToMint: UInt64,
     ): @[NonFungibleToken.NFT]
   }
+
+  //=========================================================================
 
   pub resource interface CollectionPublic {
     pub fun deposit(token: @NonFungibleToken.NFT)
@@ -59,67 +77,94 @@ pub contract Niftory {
     pub fun withdrawBulk(withdrawIDs: [UInt64]): @[NonFungibleToken.NFT]
   }
 
-  // pub resource RoyaltiesResolver: MetadataViewsManager.Resolver {
-  //   pub let type: Type
-  //   pub let royalties: [MetadataViews.Royalty]
-  //   pub fun resolve(_ nftRef: &NonFungibleToken.NFT): AnyStruct? {
-  //     return self.royalties
-  //   }
-  //   init(royalties: [MetadataViews.Royalty]) {
-  //     self.type = Type<MetadataViews.Royalties>()
-  //     self.royalties = royalties
-  //   }
-  // } 
+  //=========================================================================
 
-  // pub resource IpfsDisplayResolver: MetadataViewsManager.Resolver {
-  //   pub let type: Type
-  //   pub let titleField: String
-  //   pub let descriptionField: String
-  //   pub let ipfsImageField: String
-  //   pub let defaultTitle: String
-  //   pub let defaultDescription: String
-  //   pub let defaultIpfsImage: String
-  //   pub fun resolve(_ nftRef: &NonFungibleToken.NFT): AnyStruct? {
-  //     let nft = nftRef as! &{NFTPublic}
-  //     let metadata = nft.metadata()
-  //     return MetadataViews.Display(
-  //       name: metadata.getOr(key: self.titleField, else: self.defaultTitle),
-  //       description: metadata.getOr(
-  //         key: self.descriptionField, 
-  //         else: self.defaultDescription
-  //       ),
-  //       thumbnail: MetadataViews.HTTPFile(
-  //         url: metadata.getOr(
-  //           key: self.ipfsImageField,
-  //           else: self.defaultIpfsImage,
-  //         )
-  //       )
-  //     )
-  //   }
-  //   init(
-  //     titleField: String,
-  //     descriptionField: String,
-  //     ipfsImageField: String,
-  //     defaultTitle: String,
-  //     defaultDescription: String,
-  //     defaultIpfsImage: String,
-  //   ) {
-  //     self.type = Type<MetadataViews.Display>()
-  //     self.titleField = titleField
-  //     self.descriptionField = descriptionField
-  //     self.ipfsImageField = ipfsImageField
-  //     self.defaultTitle = defaultTitle
-  //     self.defaultDescription = defaultDescription
-  //     self.defaultIpfsImage = defaultIpfsImage
-  //   }
-  // }
+  pub resource RoyaltiesResolver: MetadataViewsManager.Resolver {
+    pub let type: Type
+    pub let royalties: MetadataViews.Royalties
+    pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
+      return self.royalties
+    }
+    init(royalties: MetadataViews.Royalties) {
+      self.type = Type<MetadataViews.Royalties>()
+      self.royalties = royalties
+    }
+  } 
 
-  init() {
-    self.StandardMinterPrivatePath = /private/niftoryminter
-    self.StandardMinterPath = /storage/niftoryminter
+  pub fun createRoyaltiesResolver(royalties: MetadataViews.Royalties): @RoyaltiesResolver {
+      return <-create RoyaltiesResolver(royalties: royalties)
+  }
 
-    self.StandardSetManagerPublicPath = /public/niftorysetmanager
-    self.StandardSetManagerPrivatePath = /private/niftorysetmanager
-    self.StandardSetManagerPath = /storage/niftorysetmanager
+  pub resource NFTCollectionDataResolver: MetadataViewsManager.Resolver {
+    pub let type: Type
+    pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
+      let nft = nftRef as! &{NFTPublic}
+      return nft.NFTCollectionData()
+    }
+    init() {
+      self.type = Type<MetadataViews.NFTCollectionData>()
+    }
+  } 
+
+  pub fun createNFTCollectionDataResolver(): @NFTCollectionDataResolver {
+      return <-create NFTCollectionDataResolver()
+  }
+
+  pub resource IpfsDisplayResolver: MetadataViewsManager.Resolver {
+    pub let type: Type
+    pub let titleField: String
+    pub let descriptionField: String
+    pub let ipfsImageField: String
+    pub let defaultTitle: String
+    pub let defaultDescription: String
+    pub let defaultIpfsImage: String
+    pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
+      let nft = nftRef as! &{NFTPublic}
+      let metadata = nft.metadata().get() as! &{String: String}
+      let name = metadata[self.titleField] ?? self.defaultTitle
+      let description = metadata[self.descriptionField]
+        ?? self.defaultDescription
+      let url = metadata[self.ipfsImageField] ?? self.defaultIpfsImage
+      return MetadataViews.Display(
+        name: name,
+        description: description,
+        thumbnail: MetadataViews.HTTPFile(url: url)
+      )
+    }
+
+    init(
+      titleField: String,
+      descriptionField: String,
+      ipfsImageField: String,
+      defaultTitle: String,
+      defaultDescription: String,
+      defaultIpfsImage: String,
+    ) {
+      self.type = Type<MetadataViews.Display>()
+      self.titleField = titleField
+      self.descriptionField = descriptionField
+      self.ipfsImageField = ipfsImageField
+      self.defaultTitle = defaultTitle
+      self.defaultDescription = defaultDescription
+      self.defaultIpfsImage = defaultIpfsImage
+    }
+  }
+
+  pub fun createIpfsDispayResolver(
+    titleField: String,
+    descriptionField: String,
+    ipfsImageField: String,
+    defaultTitle: String,
+    defaultDescription: String,
+    defaultIpfsImage: String,
+  ): @IpfsDisplayResolver {
+      return <-create IpfsDisplayResolver(
+        titleField: titleField,
+        descriptionField: descriptionField,
+        ipfsImageField: ipfsImageField,
+        defaultTitle: defaultTitle,
+        defaultDescription: defaultDescription,
+        defaultIpfsImage: defaultIpfsImage,
+      )
   }
 }

@@ -13,7 +13,7 @@ transaction(
       .borrow<&{MutableSetManager.ManagerPrivate}>()!
     let set = manager.getAuth(setId)
     let template = set.getAuth(templateId)
-    let metadata = template.metadataAuth()
-    metadata.set(key: key, value: value)
+    let metadata = template.metadataAuth().auth() as! &{String: String}
+    metadata[key] = value  
   }
 }

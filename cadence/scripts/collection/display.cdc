@@ -1,16 +1,39 @@
-import Beam from "../contracts/Beam.cdc"
-import MetadataViews from "../contracts/MetadataViews.cdc"
+import MetadataViews from "../../contracts/MetadataViews.cdc"
 
-pub fun main(account: Address, id: UInt64): AnyStruct {
+import Niftory from "../../contracts/Niftory.cdc"
+  
+pub struct Display {
+  pub let name: String
+  pub let description: String
+  pub let thumbnail: String
 
-    let collectionRef = getAccount(account).getCapability(Beam.CollectionPublicPath)
-        .borrow<&{Beam.BeamCollectionPublic}>()
-        ?? panic("Could not get public Collectible collection reference")
+  init(
+    name: String,
+    description: String,
+    thumbnail: String
+  ) {
+    self.name = name
+    self.description = description
+    self.thumbnail = thumbnail
+  }
+}
 
-    let viewResolver = collectionRef.borrowViewResolver(id: id)
-
-    let data = viewResolver.resolveView(Type<MetadataViews.Display>())
-    let display = data as! MetadataViews.Display
-
-    return data!
+pub fun main(
+  collectionAddress: Address,
+  collectionPath: String,
+  nftId: UInt64
+): AnyStruct {
+  let collectionPublicPath = PublicPath(identifier: collectionPath)!
+  let collection = getAccount(collectionAddress)
+    .getCapability(collectionPublicPath)
+    .borrow<&{Niftory.CollectionPublic}>()!
+  let nft = collection.borrow(id: nftId)
+  let view = Type<MetadataViews.Display>()
+  let data = nft.resolveView(view)!
+  let realData = data as! MetadataViews.Display
+  return Display(
+    name: realData.name,
+    description: realData.description,
+    thumbnail: realData.thumbnail.uri()
+  )
 }

@@ -4,7 +4,10 @@ import MetadataViews from "./MetadataViews.cdc"
 import MutableMetadata from "./MutableMetadata.cdc"
 import MutableSet from "./MutableSet.cdc"
 import MutableSetManager from "./MutableSetManager.cdc"
+import MetadataViewsManager from "./MetadataViewsManager.cdc"
+
 import Niftory from "./Niftory.cdc"
+import NFTRegistry from "./NFTRegistry.cdc"
 
 pub contract XXTEMPLATEXX: NonFungibleToken {
 
@@ -18,14 +21,65 @@ pub contract XXTEMPLATEXX: NonFungibleToken {
   pub event Withdraw(id: UInt64, from: Address?)
   pub event Deposit(id: UInt64, to: Address?)
 
+  // ===========================================================================
+
+  pub fun nftBrandMetadata(): NFTRegistry.RegistryItem {
+    let registry = getAccount(0x01cf0e2f2f715450).getCapability(
+      NFTRegistry.StandardRegistryPublicPath
+    ).borrow<&{NFTRegistry.RegistryPublic}>()!
+    let nftBrandMetadata = registry.infoFor(brand: "ExampleNFT")
+    return nftBrandMetadata
+  }
+
   pub fun SetManagerPublic():
       Capability<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>
     {
       return XXTEMPLATEXX.account
         .getCapability<
           &MutableSetManager.Manager{MutableSetManager.ManagerPublic}
-        >(Niftory.StandardSetManagerPublicPath)
+        >(self.nftBrandMetadata().SetManagerPublicPath)
     }
+
+  pub fun MetadataViewsManagerPublic():
+      Capability<
+        &MetadataViewsManager.Manager{MetadataViewsManager.ManagerPublic}
+      >
+    {
+      return XXTEMPLATEXX.account
+        .getCapability<
+          &MetadataViewsManager.Manager{MetadataViewsManager.ManagerPublic}
+        >(self.nftBrandMetadata().MetadataViewsPublicPath)
+    }
+
+  pub fun NFTCollectionData(): MetadataViews.NFTCollectionData {
+    return MetadataViews.NFTCollectionData(
+      storagePath: XXTEMPLATEXX.CollectionPath,
+      publicPath: XXTEMPLATEXX.CollectionPublicPath,
+      providerPath: XXTEMPLATEXX.CollectionPrivatePath,
+      publicCollection: Type<&{
+        NonFungibleToken.CollectionPublic,
+        Niftory.CollectionPublic
+      }>(),
+      publicLinkedType: Type<&{
+        NonFungibleToken.Receiver,
+        NonFungibleToken.CollectionPublic,
+        MetadataViews.ResolverCollection,
+        Niftory.CollectionPublic
+      }>(),
+      providerLinkedType: Type<&{
+        NonFungibleToken.Provider,
+        NonFungibleToken.Receiver,
+        NonFungibleToken.CollectionPublic,
+        MetadataViews.ResolverCollection,
+        Niftory.CollectionPublic
+      }>(),
+      createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
+          return <-XXTEMPLATEXX.createEmptyCollection()
+      })
+    )
+  }
+    
+  // ===========================================================================
 
   pub resource NFT:
     NonFungibleToken.INFT,
@@ -56,12 +110,38 @@ pub contract XXTEMPLATEXX: NonFungibleToken {
     }
 
     pub fun getViews(): [Type] {
-      return []
+      pre {
+        XXTEMPLATEXX.MetadataViewsManagerPublic().check() :
+          "Cannot find metadata views manager capability"
+      }
+      return XXTEMPLATEXX
+        .MetadataViewsManagerPublic()
+        .borrow()!
+        .getViews()
     }
 
     pub fun resolveView(_ view: Type): AnyStruct? {
-      return nil
+      pre {
+        XXTEMPLATEXX.MetadataViewsManagerPublic().check() :
+          "Cannot find metadata views manager capability"
+      }
+      let nftRef = &self as &{Niftory.NFTPublic}
+      return XXTEMPLATEXX
+        .MetadataViewsManagerPublic()
+        .borrow()!
+        .resolveView(view: view, nftRef: nftRef)
     }
+
+    pub fun SetManagerPublic():
+      Capability<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>
+    {
+      return XXTEMPLATEXX.SetManagerPublic()
+    }
+
+    pub fun NFTCollectionData(): MetadataViews.NFTCollectionData {
+      return XXTEMPLATEXX.NFTCollectionData()
+    }
+    
 
     init(metadataAccessor: MutableSetManager.MetadataAccessor, serial: UInt64) {
       self.id = XXTEMPLATEXX.totalSupply
@@ -164,15 +244,34 @@ pub contract XXTEMPLATEXX: NonFungibleToken {
     return <-create Collection()
   }
 
-  // ===========================================================================
+  //=========================================================================
 
-  pub resource Minter: Niftory.MinterPrivate {
+  pub resource Manager: Niftory.ManagerPublic, Niftory.ManagerPrivate {
+
+    pub fun SetManagerPublic():
+      Capability<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>
+    {
+      return XXTEMPLATEXX.SetManagerPublic()
+    }
+
+    pub fun NFTCollectionData(): MetadataViews.NFTCollectionData {
+      return XXTEMPLATEXX.NFTCollectionData()
+    }
+
+    pub fun MetadataViewsManagerPublic():
+      Capability<
+        &MetadataViewsManager.Manager{MetadataViewsManager.ManagerPublic}
+      >
+    {
+      return XXTEMPLATEXX.MetadataViewsManagerPublic()
+    }
+    
     pub fun mint(
       metadataAccessor: MutableSetManager.MetadataAccessor,
     ): @NonFungibleToken.NFT {
       let setManagerMinter = XXTEMPLATEXX.account
         .getCapability<&{MutableSetManager.ManagerMinter}>(
-          Niftory.StandardSetManagerPrivatePath
+          XXTEMPLATEXX.nftBrandMetadata().SetManagerPrivatePath
         ).borrow()!
       let templateMinter = setManagerMinter
         .getSetMinter(metadataAccessor.setId)
@@ -189,7 +288,7 @@ pub contract XXTEMPLATEXX: NonFungibleToken {
     ): @[NonFungibleToken.NFT] {
       let setManagerMinter = XXTEMPLATEXX.account
         .getCapability<&{MutableSetManager.ManagerMinter}>(
-          Niftory.StandardSetManagerPrivatePath
+          XXTEMPLATEXX.nftBrandMetadata().SetManagerPrivatePath
         ).borrow()!
       let templateMinter = setManagerMinter
         .getSetMinter(metadataAccessor.setId)
@@ -209,81 +308,87 @@ pub contract XXTEMPLATEXX: NonFungibleToken {
 
   //=========================================================================
 
-  pub resource ContractData {
-
-    pub fun SetManagerPublic():
-      Capability<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>
-    {
-      return XXTEMPLATEXX.account
-        .getCapability<
-          &MutableSetManager.Manager{MutableSetManager.ManagerPublic}
-        >(Niftory.StandardSetManagerPublicPath)
-    }
-
-    pub fun NFTCollectionData(): MetadataViews.NFTCollectionData {
-      return MetadataViews.NFTCollectionData(
-        storagePath: XXTEMPLATEXX.CollectionPath,
-        publicPath: XXTEMPLATEXX.CollectionPublicPath,
-        providerPath: XXTEMPLATEXX.CollectionPrivatePath,
-        publicCollection: Type<&{
-          NonFungibleToken.CollectionPublic,
-          Niftory.CollectionPublic
-        }>(),
-        publicLinkedType: Type<&{
-          NonFungibleToken.Receiver,
-          NonFungibleToken.CollectionPublic,
-          MetadataViews.ResolverCollection,
-          Niftory.CollectionPublic
-        }>(),
-        providerLinkedType: Type<&{
-          NonFungibleToken.Receiver,
-          NonFungibleToken.CollectionPublic,
-          MetadataViews.ResolverCollection,
-          Niftory.CollectionPublic
-        }>(),
-        createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
-            return <-XXTEMPLATEXX.createEmptyCollection()
-        })
-      )
-    }
-  }
-
-
   init() {
+
+    let registry = getAccount(0x01cf0e2f2f715450).getCapability(
+      NFTRegistry.StandardRegistryPublicPath
+    ).borrow<&{NFTRegistry.RegistryPublic}>()!
+    let nftBrandMetadata = registry.infoFor(brand: "ExampleNFT")
+
+    // Initialize the total supply to 0.
     self.totalSupply = 0
 
-    self.CollectionPrivatePath = /private/xxtemplatexxcollection
-    self.CollectionPublicPath = /public/xxtemplatexxcollection
-    self.CollectionPath = /storage/xxtemplatexxcollection
+    self.CollectionPrivatePath = nftBrandMetadata.CollectionPrivatePath
+    self.CollectionPublicPath = nftBrandMetadata.CollectionPublicPath
+    self.CollectionPath = nftBrandMetadata.CollectionPath
 
-    self.account.save<@Minter>(
-      <-create Minter(),
-      to: Niftory.StandardMinterPath
-    )
-    self.account.link<&{Niftory.MinterPrivate}>(
-      Niftory.StandardMinterPrivatePath,
-      target: Niftory.StandardMinterPath
-    )
+    // Save the NFT Manager to this contract's storage.
+    self
+      .account
+      .save<@Manager>(
+        <-create Manager(),
+        to: nftBrandMetadata.NftManagerPath
+      )
+    self
+      .account
+      .link<&{Niftory.ManagerPublic}>(
+        nftBrandMetadata.NftManagerPublicPath,
+        target: nftBrandMetadata.NftManagerPath
+      )
+    self
+      .account
+      .link<&{Niftory.ManagerPrivate}>(
+        nftBrandMetadata.NftManagerPrivatePath,
+        target: nftBrandMetadata.NftManagerPath
+      )
 
-    self.account.save<@MutableSetManager.Manager>(
-      <-MutableSetManager.createSetManager(
-        name: "XXTEMPLATEXX",
-        description: "The set manager for XXTEMPLATEXX."
-      ),
-      to: Niftory.StandardSetManagerPath
-    )
-    self.account.link<&{
-      MutableSetManager.ManagerPrivate,
-      MutableSetManager.ManagerMinter
-    }>(
-      Niftory.StandardSetManagerPrivatePath,
-      target: Niftory.StandardSetManagerPath
-    )
+    // Save a MutableSetManager to this contract's storage, as the source of
+    // this NFT contract's metadata.
+    self
+      .account
+      .save<@MutableSetManager.Manager>(
+        <-MutableSetManager.createSetManager(
+          name: "XXTEMPLATEXX",
+          description: "The set manager for XXTEMPLATEXX."
+        ),
+        to: nftBrandMetadata.SetManagerPath
+      )
     self
       .account
       .link<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>(
-        Niftory.StandardSetManagerPublicPath,
-        target: Niftory.StandardSetManagerPath
+        nftBrandMetadata.SetManagerPublicPath,
+        target: nftBrandMetadata.SetManagerPath
+      )
+    self
+      .account
+      .link<&{
+        MutableSetManager.ManagerPrivate,
+        MutableSetManager.ManagerMinter
+      }>(
+        nftBrandMetadata.SetManagerPrivatePath,
+        target: nftBrandMetadata.SetManagerPath
+      )
+
+    // Save a MetadataViewsManager to this contract's storage, which will
+    // allow observers to inspect standardized metadata through any of its
+    // configured MetadataViews resolvers.
+    self
+      .account
+      .save<@MetadataViewsManager.Manager>(
+        <-MetadataViewsManager.createManager(),
+        to: nftBrandMetadata.MetadataViewsPath
+      )
+    self
+      .account
+      .link<&MetadataViewsManager.Manager{MetadataViewsManager.ManagerPublic}>(
+        nftBrandMetadata.MetadataViewsPublicPath,
+        target: nftBrandMetadata.MetadataViewsPath
+      )
+    self
+      .account
+      .link<&MetadataViewsManager.Manager{MetadataViewsManager.ManagerPrivate}>(
+        nftBrandMetadata.MetadataViewsPrivatePath,
+        target: nftBrandMetadata.MetadataViewsPath
       )
   }
 }

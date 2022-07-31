@@ -5,9 +5,12 @@ import {
   collection,
   collector,
   contractAccount,
+  metadataViewsManagerAdmin,
   mutable_metadata,
   mutable_set,
   mutable_set_manager,
+  niftory,
+  niftoryAdmin,
   setAdmin,
   setManagerAdmin,
   templateAdmin,
@@ -35,6 +38,8 @@ const isSubset = (
   subset: { [key: string]: string },
   superset: { [key: string]: string },
 ): boolean => Object.keys(subset).every((key) => superset[key] === subset[key])
+
+const sansPrefix = (str: string): string => str.slice(2)
 
 jest.setTimeout(1000000)
 
@@ -66,16 +71,24 @@ describe('basic-test', () => {
 
     const alice = {
       deployer: contractAccount(ADMIN_ALICE),
+      niftoryAdmin: niftoryAdmin(ADMIN_ALICE),
     }
 
     const bob = {
-      setManagerAdmin: setManagerAdmin(BRAND_MANAGER_BOB, 'niftorysetmanager'),
+      setManagerAdmin: setManagerAdmin(
+        BRAND_MANAGER_BOB,
+        'ExampleNFT_setmanager',
+      ),
+      metadataViewsAdmin: metadataViewsManagerAdmin(
+        BRAND_MANAGER_BOB,
+        'ExampleNFT_setmanager',
+      ),
       set: ({ setId }: { setId: number }) => ({
-        admin: setAdmin(BRAND_MANAGER_BOB, 'niftorysetmanager', setId),
+        admin: setAdmin(BRAND_MANAGER_BOB, 'ExampleNFT_setmanager', setId),
         template: ({ templateId }: { templateId: number }) => ({
           admin: templateAdmin(
             BRAND_MANAGER_BOB,
-            'niftorysetmanager',
+            'ExampleNFT_setmanager',
             setId,
             templateId,
           ),
@@ -95,23 +108,27 @@ describe('basic-test', () => {
     const q = {
       nfts: {
         x: {
-          setManager: mutable_set_manager(addressBook.bob, 'niftorysetmanager'),
+          setManager: mutable_set_manager(
+            addressBook.bob,
+            'ExampleNFT_setmanager',
+          ),
           set: ({ setId }: { setId: number }) => ({
-            info: mutable_set(addressBook.bob, 'niftorysetmanager', setId),
+            info: mutable_set(addressBook.bob, 'ExampleNFT_setmanager', setId),
             template: ({ templateId }: { templateId: number }) => ({
               info: mutable_metadata(
                 addressBook.bob,
-                'niftorysetmanager',
+                'ExampleNFT_setmanager',
                 setId,
                 templateId,
               ),
             }),
           }),
           collection: ({ collectorAddress }: { collectorAddress: string }) => ({
-            info: collection(collectorAddress, 'xxtemplatexxcollection'),
+            info: collection(collectorAddress, 'ExampleNFT_collection'),
           }),
         },
       },
+      niftory: niftory(addressBook.alice),
     }
 
     // ================================
@@ -132,9 +149,18 @@ describe('basic-test', () => {
       .deployMutableMetadataTemplate()
       .deployMutableSet()
       .deployMutableSetManager()
+      .deployMetadataViewsManager()
       .deployNiftory()
-      .do(checkSuccessfulTransactions(7))
+      .do(checkContextAlive)
+      .do(checkSuccessfulTransactions(8))
       .wait()
+
+    await alice.niftoryAdmin
+      .deployNFTRegistry()
+      .initialize({})
+      .register_brand({ brand: 'ExampleNFT' })
+      .wait()
+    await q.niftory.brands().then(checkScriptSucceeded)
 
     // Our first attempt to fetch info fails because it's not initialized
     await q.nfts.x.setManager.info().then(checkScriptFailed)
@@ -385,13 +411,13 @@ describe('basic-test', () => {
         setId: 0,
         templateId: 0,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
       })
       .mint({
         setId: 0,
         templateId: 0,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
       })
       .do(checkSuccessfulTransactions(2))
       .wait()
@@ -410,40 +436,40 @@ describe('basic-test', () => {
         setId: 0,
         templateId: 0,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
         numToMint: 10,
       })
       .mint({
         setId: 0,
         templateId: 0,
         collector: addressBook.charlie,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
       })
       .mint({
         setId: 0,
         templateId: 0,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
       })
       .mint_bulk({
         setId: 0,
         templateId: 0,
         collector: addressBook.charlie,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
         numToMint: 9,
       })
       .mint_bulk({
         setId: 0,
         templateId: 0,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
         numToMint: 19,
       })
       .mint_bulk({
         setId: 0,
         templateId: 0,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
         numToMint: 18,
       })
       .do(checkContextAlive)
@@ -489,7 +515,7 @@ describe('basic-test', () => {
         setId: 0,
         templateId: 0,
         collector: addressBook.charlie,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
       })
       .do(checkContextDead)
       .wait()
@@ -507,7 +533,7 @@ describe('basic-test', () => {
         setId: 0,
         templateId: 1,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
         numToMint: 5,
       })
       .do(checkSuccessfulTransactions(1))
@@ -517,7 +543,7 @@ describe('basic-test', () => {
         setId: 0,
         templateId: 1,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
       })
       .do(checkContextDead)
       .wait()
@@ -540,7 +566,7 @@ describe('basic-test', () => {
         setId: 0,
         templateId: 2,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
         numToMint: 5,
       })
       .do(checkSuccessfulTransactions(1))
@@ -556,7 +582,7 @@ describe('basic-test', () => {
         setId: 0,
         templateId: 2,
         collector: addressBook.carol,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
       })
       .do(checkContextDead)
       .wait()
@@ -575,7 +601,7 @@ describe('basic-test', () => {
     await carol.collector
       .transfer({
         recipient: addressBook.charlie,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
         ids: [30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
       })
       .do(checkSuccessfulTransactions(1))
@@ -589,7 +615,7 @@ describe('basic-test', () => {
     await carol.collector
       .transfer({
         recipient: addressBook.charlie,
-        collectionPath: 'xxtemplatexxcollection',
+        collectionPath: 'ExampleNFT_collection',
         ids: [30],
       })
       .do(checkContextDead)
@@ -633,5 +659,140 @@ describe('basic-test', () => {
           views: [] as string[],
         }),
       )
+
+    // For the below section, we will look at the MetadataViews standard
+    // metadata interface. Bob will configure generic resolvers for
+    // his brand. In the below section, for each resolver, we will inspect
+    // each resolver before and after Bob adds it. We will inspect it once
+    // more after Bob removes it.
+
+    // Royalty resolver should be null to start with
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.royalty(60)
+      .then(checkScriptFailed)
+
+    // Configure a royalty resolver
+    await bob.metadataViewsAdmin
+      .set_royalty_resolver({
+        receiverAddress: addressBook.bob,
+        description: 'royalty for xx',
+        cut: '0.05',
+        receiverPath: 'flowTokenReceiver',
+      })
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.royalty(60)
+      .then(
+        checkScriptValue({
+          token: 'A.0ae53cb6e3f42a79.FlowToken.Vault',
+          receiverPath: '/public/ExampleNFT_collection',
+          cut: 0.05,
+          description: 'royalty for xx',
+        }),
+      )
+
+    // Remove the royalty resolver
+    await bob.metadataViewsAdmin
+      .remove_royalty_resolver({})
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.royalty(60)
+      .then(checkScriptFailed)
+
+    // Display resolver should be null to start with
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.display(60)
+      .then(checkScriptFailed)
+
+    // Configure a display resolver
+    await bob.metadataViewsAdmin
+      .set_ipfs_display_resolver({
+        titleField: 'nam',
+        descriptionField: 'description',
+        ipfsImageField: 'ipfsImage',
+        defaultTitle: 'defaultTitle',
+        defaultDescription: 'defaultDescription',
+        defaultIpfsImage: 'defaultIpfsImage',
+      })
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.display(60)
+      .then(
+        checkScriptValue({
+          name: 'defaultTitle',
+          description: 'defaultDescription',
+          thumbnail: 'defaultIpfsImage',
+        }),
+      )
+
+    // There was a typo in the titleField. Let's fix it.
+    await bob.metadataViewsAdmin
+      .set_ipfs_display_resolver({
+        titleField: 'name',
+        descriptionField: 'description',
+        ipfsImageField: 'ipfsImage',
+        defaultTitle: 'defaultTitle',
+        defaultDescription: 'defaultDescription',
+        defaultIpfsImage: 'defaultIpfsImage',
+      })
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.display(60)
+      .then(
+        checkScriptValue({
+          name: 'Template 2',
+          description: 'defaultDescription',
+          thumbnail: 'defaultIpfsImage',
+        }),
+      )
+
+    // Remove the display resolver
+    await bob.metadataViewsAdmin
+      .remove_ipfs_display_resolver({})
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.display(60)
+      .then(checkScriptFailed)
+
+    // NFT Collection Data resolver should be null to start with
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.collection_data(60)
+      .then(checkScriptFailed)
+
+    // Configure a collection data resolver
+    await bob.metadataViewsAdmin.set_collection_data_resolver({}).wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.collection_data(60)
+      .then(
+        checkScriptValue({
+          storagePath: '/storage/ExampleNFT_collection',
+          publicPath: '/public/ExampleNFT_collection',
+          providerPath: '/private/ExampleNFT_collection',
+        }),
+      )
+
+    // Remove the collection data resolver
+    await bob.metadataViewsAdmin
+      .remove_collection_data_resolver({})
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.collection_data(60)
+      .then(checkScriptFailed)
   })
 })

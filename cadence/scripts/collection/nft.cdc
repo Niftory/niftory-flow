@@ -5,16 +5,16 @@ pub struct NFTInfo {
   pub let serial: UInt64
   pub let setId: Int
   pub let templateId: Int
-  pub let metadata: {String: String}
-  pub let setMetadata: {String: String}
+  pub let metadata: AnyStruct
+  pub let setMetadata: AnyStruct
   pub let views: [Type]
   init(
     id: UInt64,
     serial: UInt64,
     setId: Int,
     templateId: Int,
-    metadata: {String: String},
-    setMetadata: {String: String},
+    metadata: AnyStruct,
+    setMetadata: AnyStruct,
     views: [Type]
   ) {
     self.id = id
@@ -42,8 +42,8 @@ pub fun main(
     serial: nft.serial,
     setId: nft.metadataAccessor.setId,
     templateId: nft.metadataAccessor.templateId,
-    metadata: nft.metadata().all(),
-    setMetadata: nft.set().metadata().all(),
+    metadata: nft.metadata().get(),
+    setMetadata: nft.set().metadata().get(),
     views: nft.getViews()
   )
 }
