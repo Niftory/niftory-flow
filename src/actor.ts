@@ -135,7 +135,10 @@ abstract class AnyActor<Config, Actor extends AnyActor<Config, Actor>> {
       }),
     })
 
-  log = (): Actor => this.do(console.log)
+  log = (): Actor =>
+    this.do((data) => {
+      console.log(JSON.stringify(data, null, 2))
+    })
 
   wait = (): Promise<ActorContext> => this._.context
 }

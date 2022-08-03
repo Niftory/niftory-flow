@@ -18,8 +18,14 @@ type DeployRequest = {
   args?: any[]
 }
 
+type TransactionEvent = {
+  type: String
+  data: object[]
+}
+
 type TransactionSuccess = {
   _tag: 'success'
+  events: TransactionEvent[]
 }
 
 type TransactionFailure = {
@@ -38,16 +44,23 @@ const parseRawTransactionResult = (result: any[]): TransactionResult => {
     }
   }
 
-  if (result[1] != null) {
+  const [success, error] = result
+
+  if (error != null) {
     return {
       _tag: 'failure',
-      error: result[1],
+      error: error,
     }
   }
 
   // Return success if result[0] is truthy
+  // console.log(success)
   return {
     _tag: 'success',
+    events: success.events.map((event) => ({
+      type: event.type,
+      data: event.data as object[],
+    })),
   }
 }
 

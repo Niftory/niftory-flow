@@ -19,7 +19,7 @@ transaction(
     ).borrow<&{NFTRegistry.RegistryPublic}>()!
     let nftBrandMetadata = registry.infoFor(brand: "ExampleNFT")
 
-    let resolver <- Niftory.createIpfsDispayResolver(
+    let resolver <- Niftory.createIpfsDisplayResolver(
       titleField: titleField,
       descriptionField: descriptionField,
       ipfsImageField: ipfsImageField,

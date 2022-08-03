@@ -20,7 +20,7 @@ import MutableMetadataTemplate from "./MutableMetadataTemplate.cdc"
 pub contract MutableSet {
 
   // ===========================================================================
-  // Template Capabilities
+  // Set Capabilities
   // ===========================================================================
 
   // Public functionality for Set

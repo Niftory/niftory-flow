@@ -1,3 +1,11 @@
+/*
+XXTEMPLATEXX
+
+This is the contract for XXTEMPLATEXX NFTs! 
+
+This was implemented using Niftory interfaces. For full details on how this
+contract functions, please see the Niftory and NFTRegistry contracts.
+*/
 import NonFungibleToken from "./NonFungibleToken.cdc"
 import MetadataViews from "./MetadataViews.cdc"
 
@@ -11,17 +19,32 @@ import NFTRegistry from "./NFTRegistry.cdc"
 
 pub contract XXTEMPLATEXX: NonFungibleToken {
 
+  // ========================================================================
+  // Attributes
+  // ========================================================================
+
   pub var totalSupply: UInt64
 
   pub let CollectionPrivatePath: PrivatePath
   pub let CollectionPublicPath: PublicPath
   pub let CollectionPath: StoragePath
 
+  // ========================================================================
+  // Contract Events
+  // ========================================================================
+
+  // This contract was initialized
   pub event ContractInitialized()
+
+  // A withdrawal of NFT `id` has occurred from the `from` Address
   pub event Withdraw(id: UInt64, from: Address?)
+
+  // A deposit of an NFT `id` has occurred to the `to` Address
   pub event Deposit(id: UInt64, to: Address?)
 
-  // ===========================================================================
+  // ========================================================================
+  // Contract functions
+  // ========================================================================
 
   pub fun nftBrandMetadata(): NFTRegistry.RegistryItem {
     let registry = getAccount(0x01cf0e2f2f715450).getCapability(
@@ -79,7 +102,9 @@ pub contract XXTEMPLATEXX: NonFungibleToken {
     )
   }
     
-  // ===========================================================================
+  // ========================================================================
+  // NFT
+  // ========================================================================
 
   pub resource NFT:
     NonFungibleToken.INFT,
@@ -152,7 +177,9 @@ pub contract XXTEMPLATEXX: NonFungibleToken {
     }
   }
 
-  // ===========================================================================
+  // ========================================================================
+  // Collection
+  // ========================================================================
 
   pub resource Collection:
     NonFungibleToken.Provider,
@@ -244,7 +271,9 @@ pub contract XXTEMPLATEXX: NonFungibleToken {
     return <-create Collection()
   }
 
-  //=========================================================================
+  // ========================================================================
+  // Manager
+  // ========================================================================
 
   pub resource Manager: Niftory.ManagerPublic, Niftory.ManagerPrivate {
 
@@ -306,7 +335,9 @@ pub contract XXTEMPLATEXX: NonFungibleToken {
     }
   }
 
-  //=========================================================================
+  // ========================================================================
+  // Init
+  // ========================================================================
 
   init() {
 

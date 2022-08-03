@@ -474,6 +474,7 @@ describe('basic-test', () => {
       })
       .do(checkContextAlive)
       .do(checkSuccessfulTransactions(6))
+      .log()
       .wait()
     await q.nfts.x
       .collection({ collectorAddress: addressBook.carol })
