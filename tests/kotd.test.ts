@@ -25,6 +25,7 @@ import {
   checkSkippedTransactions,
   checkSuccessfulTransactions,
   initAccount,
+  log,
 } from '../src/testers'
 
 const ADMIN_ALICE = 'admin_alice'
@@ -108,10 +109,7 @@ describe('basic-test', () => {
     const q = {
       nfts: {
         x: {
-          setManager: mutable_set_manager(
-            addressBook.bob,
-            'ExampleNFT_setmanager',
-          ),
+          setManager: mutable_set_manager(addressBook.bob, 'NiftoryTemplate'),
           set: ({ setId }: { setId: number }) => ({
             info: mutable_set(addressBook.bob, 'ExampleNFT_setmanager', setId),
             template: ({ templateId }: { templateId: number }) => ({
@@ -147,20 +145,24 @@ describe('basic-test', () => {
       .deployMetadataViews()
       .deployMutableMetadata()
       .deployMutableMetadataTemplate()
-      .deployMutableSet()
-      .deployMutableSetManager()
+      .deployMutableMetadataSet()
+      .deployMutableMetadataSetManager()
       .deployMetadataViewsManager()
-      .deployNiftory()
+      .deployNiftoryNonFungibleToken()
+      .deployNiftoryMetadataViewsResolvers()
       .do(checkContextAlive)
-      .do(checkSuccessfulTransactions(8))
+      .do(checkSuccessfulTransactions(9))
       .wait()
 
     await alice.niftoryAdmin
       .deployNFTRegistry()
       .initialize({})
-      .register_brand({ brand: 'ExampleNFT' })
+      .register_brand({ brand: 'NiftoryTemplate' })
+      .log()
+      .do(checkContextAlive)
+      .do(checkSuccessfulTransactions(3))
       .wait()
-    await q.niftory.brands().then(checkScriptSucceeded)
+    await q.niftory.brands().then(log).then(checkScriptSucceeded)
 
     // Our first attempt to fetch info fails because it's not initialized
     await q.nfts.x.setManager.info().then(checkScriptFailed)
@@ -172,6 +174,7 @@ describe('basic-test', () => {
       .wait()
     await q.nfts.x.setManager
       .info()
+      .then(log)
       .then(checkScriptSucceeded)
       .then(
         checkScriptValue({

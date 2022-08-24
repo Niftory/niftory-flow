@@ -17,56 +17,31 @@ to a particular logical set of NFTs by locking the Set.
 import MutableMetadata from "./MutableMetadata.cdc"
 import MutableMetadataTemplate from "./MutableMetadataTemplate.cdc"
 
-pub contract MutableSet {
-
-  // ===========================================================================
-  // Set Capabilities
-  // ===========================================================================
-
-  // Public functionality for Set
-  pub resource interface SetPublic {
-    pub fun locked(): Bool
-    pub fun metadata():
-      &MutableMetadata.Metadata{MutableMetadata.MetadataPublic}
-    pub fun numTemplates(): Int
-    pub fun get(_ id: Int):
-      &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplatePublic}
-  }
-
-  // Private functionality for Set
-  pub resource interface SetPrivate {
-    pub fun locked(): Bool
-    pub fun metadata(): &MutableMetadata.Metadata{MutableMetadata.MetadataPublic}
-    pub fun numTemplates(): Int
-    pub fun get(_ id: Int):
-      &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplatePublic}
-
-    pub fun metadataAuth():
-      &MutableMetadata.Metadata{MutableMetadata.MetadataPrivate}
-    pub fun getAuth(_ id: Int):
-      &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplatePrivate} 
-    pub fun lock()
-    pub fun addTemplate(_ template: @MutableMetadataTemplate.Template)
-  }
-
-  // In order to allow public minting if desired by the NFT brand owners,
-  // the mint functionality was put in it's own capability. 
-  pub resource interface SetMinter {
-    pub fun locked(): Bool
-    pub fun metadata(): &MutableMetadata.Metadata{MutableMetadata.MetadataPublic}
-    pub fun numTemplates(): Int
-    pub fun get(_ id: Int):
-      &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplatePublic}
-
-    pub fun getTemplateMinter(_ id: Int):
-      &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplateMinter} 
-  }
+pub contract MutableMetadataSet {
 
   // ===========================================================================
   // Set
   // ===========================================================================
 
-  pub resource Set: SetPublic, SetPrivate, SetMinter {
+  pub resource interface Public {
+    pub fun locked(): Bool
+    pub fun numTemplates(): Int
+    pub fun metadata():
+      &MutableMetadata.Metadata{MutableMetadata.Public}
+    pub fun getTemplate(_ id: Int):
+      &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public}
+  }
+
+  pub resource interface Private {
+    pub fun lock()
+    pub fun metadataMutable():
+      &MutableMetadata.Metadata{MutableMetadata.Public, MutableMetadata.Private}
+    pub fun getTemplateMutable(_ id: Int):
+      &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public, MutableMetadataTemplate.Private} 
+    pub fun addTemplate(_ template: @MutableMetadataTemplate.Template)
+  }
+
+  pub resource Set: Public, Private {
 
     // ========================================================================
     // Attributes
@@ -82,7 +57,7 @@ pub contract MutableSet {
     access(self) var _templates: @[MutableMetadataTemplate.Template]
 
     // ========================================================================
-    // Public functions
+    // Public
     // ========================================================================
 
     // Is this set locked from more Templates being added?
@@ -90,21 +65,21 @@ pub contract MutableSet {
       return self._locked
     }
     
-    // Public version of underyling MutableMetadata.Metadata
-    pub fun metadata(): &MutableMetadata.Metadata{MutableMetadata.MetadataPublic} {
-      return &self._metadata 
-        as &MutableMetadata.Metadata{MutableMetadata.MetadataPublic}
-    }
-
     // Number of Templates in this set
     pub fun numTemplates(): Int {
       return self._templates.length
     }
 
+    // Public version of underyling MutableMetadata.Metadata
+    pub fun metadata(): &MutableMetadata.Metadata{MutableMetadata.Public} {
+      return &self._metadata 
+        as &MutableMetadata.Metadata{MutableMetadata.Public}
+    }
+
     // Retrieve the public version of a particular template given by the
     // Template ID (index into the self._templates array) only if it exists
-    pub fun get(_ id: Int):
-      &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplatePublic}
+    pub fun getTemplate(_ id: Int):
+      &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public}
     {
       pre {
         id >= 0 && id < self._templates.length :
@@ -114,24 +89,29 @@ pub contract MutableSet {
             .concat(self._templates.length.toString())
       }
       return &self._templates[id]
-        as &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplatePublic}
+        as &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public}
     }
 
     // ========================================================================
-    // Private functions
+    // Private
     // ========================================================================
 
+    // Lock this set so more Templates may not be added to it.
+    pub fun lock() {
+      self._locked = true
+    }
+
     // Private version of underyling MutableMetadata.Metadata
-    pub fun metadataAuth():
-      &MutableMetadata.Metadata{MutableMetadata.MetadataPrivate}
+    pub fun metadataMutable():
+      &MutableMetadata.Metadata{MutableMetadata.Public, MutableMetadata.Private}
     {
       return &self._metadata as &MutableMetadata.Metadata
     }
     
     // Retrieve the private version of a particular template given by the
     // Template ID (index into the self._templates array) only if it exists
-    pub fun getAuth(_ id: Int):
-      &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplatePrivate}
+    pub fun getTemplateMutable(_ id: Int):
+      &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public, MutableMetadataTemplate.Private}
     {
       pre {
         id >= 0 && id < self._templates.length :
@@ -141,12 +121,7 @@ pub contract MutableSet {
             .concat(self._templates.length.toString())
       }
       return &self._templates[id]
-        as &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplatePrivate} 
-    }
-
-    // Lock this set so more Templates may not be added to it.
-    pub fun lock() {
-      self._locked = true
+        as &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public, MutableMetadataTemplate.Private} 
     }
 
     // Add a Template to this set if not locked
@@ -158,24 +133,8 @@ pub contract MutableSet {
     }
 
     // ========================================================================
-    // Minter functions
+    // init/destroy
     // ========================================================================
-
-    // Get the minter for a particular Template.
-    pub fun getTemplateMinter(_ id: Int):
-      &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplateMinter}
-    {
-      pre {
-        id >= 0 && id < self._templates.length :
-          id
-            .toString()
-            .concat(" is not a valid template ID. Number of templates is ")
-            .concat(self._templates.length.toString())
-      }
-      return &self._templates[id]
-        as &MutableMetadataTemplate.Template{MutableMetadataTemplate.TemplateMinter} 
-    }
-
 
     init(metadata: @MutableMetadata.Metadata) {
       self._locked = false
@@ -194,7 +153,7 @@ pub contract MutableSet {
   // ========================================================================
 
   // Create a new Set resource with the given Metadata
-  pub fun createSet(metadata: @MutableMetadata.Metadata): @MutableSet.Set {
+  pub fun create(metadata: @MutableMetadata.Metadata): @Set {
     return <-create Set(metadata: <-metadata)
   }
 }

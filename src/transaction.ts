@@ -49,7 +49,7 @@ const parseRawTransactionResult = (result: any[]): TransactionResult => {
   if (error != null) {
     return {
       _tag: 'failure',
-      error: error,
+      error: error.toString(),
     }
   }
 

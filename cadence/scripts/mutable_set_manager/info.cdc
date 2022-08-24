@@ -1,4 +1,4 @@
-import MutableSetManager from "../../contracts/MutableSetManager.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
 pub struct SetManagerInfo {
   pub let name: String
@@ -11,11 +11,12 @@ pub struct SetManagerInfo {
   }
 }
 
-pub fun main(address: Address, path: String): SetManagerInfo {
-  let publicPath = PublicPath(identifier: path)!
-  let manager = getAccount(address)
-    .getCapability(publicPath)
-    .borrow<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>()!
+pub fun main(registryAddress: Address, brand: String): SetManagerInfo {
+  let accessor = NiftoryNFTRegistry.Accessor(
+    registryAddress,
+    brand
+  )
+  let manager = NiftoryNFTRegistry.getSetManagerPublic(accessor)
   return SetManagerInfo(
     name: manager.name(),
     description: manager.description(),

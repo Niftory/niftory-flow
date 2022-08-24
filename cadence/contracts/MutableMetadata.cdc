@@ -1,6 +1,5 @@
 /*
 MutableMetadata
-github.com/niftory/niftory-flow
 
 This contract serves as a container for metadata that can be modified after
 it has been created. Any underyling struct can be used as the metadata, and
@@ -11,39 +10,26 @@ Administrators with access to this contract's private capabilities will be
 allowed to modify the metadata as they wish until they decide to lock it. After
 it has been locked, observers can rest asssured knowing the metadata for a
 particular item (most likely an NFT) can no longer be modified.
-
-Please contact XXXXXX@niftory.com for additional details.
-
-Created by Niftory (niftory.com)
 */
 
 pub contract MutableMetadata {
-
-  //==========================================================================
-  // Metadata Capabilities
-  //==========================================================================
-
-  // Public functionality for Metadata (see Metadata for details)
-  pub resource interface MetadataPublic {
-    pub fun locked(): Bool
-    pub fun get(): auth &AnyStruct
-  }
-
-  // Private functionality for Metadata (see Metadata for details)
-  pub resource interface MetadataPrivate {
-    pub fun locked(): Bool
-    pub fun get(): auth &AnyStruct
-
-    pub fun lock()
-    pub fun replace(new: AnyStruct)
-    pub fun auth(): auth &AnyStruct
-  }
 
   // =========================================================================
   // Metadata
   // =========================================================================
 
-  pub resource Metadata: MetadataPublic, MetadataPrivate {
+  pub resource interface Public {
+    pub fun locked(): Bool
+    pub fun get(): AnyStruct
+  }
+
+  pub resource interface Private {
+    pub fun lock()
+    pub fun getMutable(): auth &AnyStruct
+    pub fun replace(_ new: AnyStruct)
+  }
+
+  pub resource Metadata: Public, Private {
 
     // ========================================================================
     // Attributes
@@ -56,7 +42,7 @@ pub contract MutableMetadata {
     access(self) var _metadata: AnyStruct 
 
     // ========================================================================
-    // Public functions
+    // Public
     // ========================================================================
 
     // Is this metadata locked for modification? 
@@ -65,42 +51,43 @@ pub contract MutableMetadata {
     }
 
     // Get a copy of the underlying metadata
-    pub fun get(): auth &AnyStruct {
+    pub fun get(): AnyStruct {
 
-      // It's important that this is copied, otherwise the metadata can 
-      // be modified by the caller. Without turning it into an auth reference,
-      // the caller would not be able to downcast the AnyStruct
-      let copied = self._metadata 
-      return &copied as auth &AnyStruct
+      // It's important that a copy returned and not a reference.
+      return self._metadata
     }
 
     // ========================================================================
-    // Private functions
+    // Private
     // ========================================================================
-
-    // Replace the metadata entirely with a new underlying metadata AnyStruct,
-    // only if the metadata has not been locked.
-    pub fun replace(new: AnyStruct) {
-      pre {
-        !self._locked : "Metadata is locked"
-      }
-      self._metadata = new
-    }
-
-    // Retrieve a modifiable version of the underlying metadata, only if the
-    // metadata has not been locked.
-    pub fun auth(): auth &AnyStruct {
-      pre {
-        !self._locked : "Metadata is locked"
-      }
-      return &self._metadata as auth &AnyStruct
-    }
 
     // Lock this metadata, preventing further modification.
     pub fun lock() {
       self._locked = true
     }
     
+    // Retrieve a modifiable version of the underlying metadata, only if the
+    // metadata has not been locked.
+    pub fun getMutable(): auth &AnyStruct {
+      pre {
+        !self._locked : "Metadata is locked"
+      }
+      return &self._metadata as auth &AnyStruct
+    }
+
+    // Replace the metadata entirely with a new underlying metadata AnyStruct,
+    // only if the metadata has not been locked.
+    pub fun replace(_ new: AnyStruct) {
+      pre {
+        !self._locked : "Metadata is locked"
+      }
+      self._metadata = new
+    }
+
+    // ========================================================================
+    // init/destroy
+    // ========================================================================
+
     init(metadata: AnyStruct) {
       self._locked = false
       self._metadata = metadata
@@ -112,7 +99,7 @@ pub contract MutableMetadata {
   // ========================================================================
 
   // Create a new Metadata resource with the given generic AnyStruct metadata
-  pub fun createMetadata(metadata: AnyStruct): @Metadata {
-    return <- create Metadata(metadata: metadata)
+  pub fun create(metadata: AnyStruct): @Metadata {
+    return <-create Metadata(metadata: metadata)
   }
 }

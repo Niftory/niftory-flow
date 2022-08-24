@@ -3,17 +3,19 @@ MetadataViewsManager
 
 MetadataViews (please see that contract for more details) provides metadata 
 standards for NFTs to implement so 3rd-party applications do not need to rely
-on the specifics of a given NFT.
+on the specific programmatic interfaces of a given NFT.
 
 This contract provides a way to augment an NFT contract with a customizable
-MetadataViews interface so that admins of an instance of this manager may 
+MetadataViews interface so that admins of this manager may 
 add or remove NFT Resolvers. These Resolvers take an AnyStruct (likely to
 be an interface of the NFT itself) and map that AnyStruct to one of the 
 MetadataViews Standards.
 
 For example, one may make a Display resolver and assume that the "AnyStruct"
 object can be downcasted into an interface that can resolve the name,
-description, and url of that NFT.
+description, and url of that NFT. The Display Resolver can assuming the NFT's
+underlying metadata is a {String: String} dictionary and the Display name is
+the same as nftmetadata['name']/
 */
 
 import MetadataViews from "./MetadataViews.cdc"
@@ -27,7 +29,7 @@ pub contract MetadataViewsManager {
   // A Resolver effectively converts one struct into another. Under normal
   // conditions, the input should be an NFT and the output should be a 
   // standard MetadataViews interface.
-  pub resource interface Resolver {
+  pub struct interface Resolver {
 
     // The type of the particular MetadataViews struct this Resolver creates
     pub let type: Type
@@ -37,30 +39,21 @@ pub contract MetadataViewsManager {
   }
 
   // ===========================================================================
-  // Manager Capabilities
-  // ===========================================================================
-
-  // Public functionality for Manager
-  pub resource interface ManagerPublic {
-    pub fun getViews(): [Type]
-    pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct?
-  }
-
-  // Private functionality for Manager
-  pub resource interface ManagerPrivate {
-    pub fun getViews(): [Type]
-    pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct?
-
-    pub fun lock()
-    pub fun addResolver(_ resolver: @{Resolver})
-    pub fun removeResolver(type: Type)
-  }
-
-  // ===========================================================================
   // Manager
   // ===========================================================================
 
-  pub resource Manager: ManagerPrivate, ManagerPublic {
+  pub resource interface Public {
+    pub fun getViews(): [Type]
+    pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct?
+  }
+
+  pub resource interface Private {
+    pub fun lock()
+    pub fun addResolver(_ resolver: {Resolver})
+    pub fun removeResolver(_ type: Type)
+  }
+
+  pub resource Manager: Private, Public {
 
     // ========================================================================
     // Attributes
@@ -70,10 +63,10 @@ pub contract MetadataViewsManager {
     access(self) var _locked: Bool
 
     // Resolvers this manager has available
-    access(self) let _resolvers: @{Type: {Resolver}}
+    access(self) let _resolvers: {Type: {Resolver}}
 
     // ========================================================================
-    // Public functions
+    // Public
     // ========================================================================
 
     // Get all views supported by the manager
@@ -91,38 +84,37 @@ pub contract MetadataViewsManager {
     }
 
     // ========================================================================
-    // Private functions
+    // Private
     // ========================================================================
 
-    // Lock this manager so that resolvers cannot be added nor removed
+    // Lock this manager so that resolvers can be neither added nor removed
     pub fun lock() {
       self._locked = true
     }
 
     // Add the given resolver if the manager is not locked
-    pub fun addResolver(_ resolver: @{Resolver}) {
+    pub fun addResolver(_ resolver: {Resolver}) {
       pre {
         !self._locked : "Manager is locked."
       }
-      let oldResolver <- self._resolvers[resolver.type] <- resolver
-      destroy oldResolver
+      self._resolvers[resolver.type] = resolver
     }
 
     // Remove the resolver of the provided type
-    pub fun removeResolver(type: Type) {
+    pub fun removeResolver(_ type: Type) {
       pre {
         !self._locked : "Manager is locked."
       }
-      destroy self._resolvers.remove(key: type)
+      self._resolvers.remove(key: type)
     }
+
+    // ========================================================================
+    // init/destroy
+    // ========================================================================
 
     init() {
-      self._resolvers <- {}
+      self._resolvers = {}
       self._locked = false
-    }
-
-    destroy() {
-      destroy self._resolvers
     }
   }
 
@@ -131,7 +123,7 @@ pub contract MetadataViewsManager {
   // ========================================================================
 
   // Create a new Manager
-  pub fun createManager(): @Manager {
-    return <- create Manager()
+  pub fun create(): @Manager {
+    return <-create Manager()
   }
 }

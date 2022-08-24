@@ -11,9 +11,9 @@ A SetManager should have a name and description and provides a way to add
 additional Sets and access those Sets for mutation, if allowed by the Set.
 */
 
-import MutableSet from "./MutableSet.cdc"
+import MutableMetadataSet from "./MutableMetadataSet.cdc"
 
-pub contract MutableSetManager {
+pub contract MutableMetadataSetManager {
   
   // ===========================================================================
   // MetadataAccessor 
@@ -24,7 +24,7 @@ pub contract MutableSetManager {
   // the two values to get a Template
   // - Set identifier
   // - Template identifier (within that Set)
-  pub struct MetadataAccessor {
+  pub struct Accessor {
     pub let setId: Int
     pub let templateId: Int
     init(
@@ -37,46 +37,25 @@ pub contract MutableSetManager {
   }
 
   // ===========================================================================
-  // Manager Capabilities
-  // ===========================================================================
-
-  // Public functionality for Manager
-  pub resource interface ManagerPublic {
-    pub fun name(): String
-    pub fun description(): String
-    pub fun numSets(): Int
-    pub fun get(_ id: Int): &MutableSet.Set{MutableSet.SetPublic}
-  }
-
-  // Private functionality for Manager
-  pub resource interface ManagerPrivate {
-    pub fun get(_ id: Int): &MutableSet.Set{MutableSet.SetPublic}
-    pub fun name(): String
-    pub fun description(): String
-    pub fun numSets(): Int
-
-    pub fun getAuth(_ id: Int): &MutableSet.Set{MutableSet.SetPrivate}
-    pub fun setName(_ name: String)
-    pub fun setDescription(_ description: String)
-    pub fun addMutableSet(_ set: @MutableSet.Set)
-  }
-
-  // In order to allow public minting if desired by the NFT brand owners,
-  // the mint functionality was put in it's own capability. 
-  pub resource interface ManagerMinter {
-    pub fun name(): String
-    pub fun description(): String
-    pub fun numSets(): Int
-    pub fun get(_ id: Int): &MutableSet.Set{MutableSet.SetPublic}
-
-    pub fun getSetMinter(_ id: Int): &MutableSet.Set{MutableSet.SetMinter}
-  }
-
-  // ===========================================================================
   // Manager
   // ===========================================================================
 
-  pub resource Manager : ManagerPublic, ManagerPrivate, ManagerMinter {
+  pub resource interface Public {
+    pub fun name(): String
+    pub fun description(): String
+    pub fun numSets(): Int
+    pub fun getSet(_ id: Int): &MutableMetadataSet.Set{MutableMetadataSet.Public}
+  }
+
+  pub resource interface Private {
+    pub fun setName(_ name: String)
+    pub fun setDescription(_ description: String)
+    pub fun getSetMutable(_ id: Int):
+      &MutableMetadataSet.Set{MutableMetadataSet.Public, MutableMetadataSet.Private}
+    pub fun addSet(_ set: @MutableMetadataSet.Set)
+  }
+
+  pub resource Manager: Public, Private {
 
     // ========================================================================
     // Attributes
@@ -85,11 +64,11 @@ pub contract MutableSetManager {
     // Name of this manager
     access(self) var _name: String
 
-    // Description this manager
+    // Description of this manager
     access(self) var _description: String  
 
     // Sets owned by this manager
-    access(self) var _mutableSets: @[MutableSet.Set]
+    access(self) var _mutableSets: @[MutableMetadataSet.Set]
 
     // ========================================================================
     // Public functions
@@ -111,7 +90,7 @@ pub contract MutableSetManager {
     }
 
     // Get the public version of a particular set
-    pub fun get(_ id: Int): &MutableSet.Set{MutableSet.SetPublic} {
+    pub fun getSet(_ id: Int): &MutableMetadataSet.Set{MutableMetadataSet.Public} {
       pre {
         id >= 0 && id < self._mutableSets.length :
           id
@@ -119,24 +98,13 @@ pub contract MutableSetManager {
             .concat(" is not a valid set ID. Number of sets is ")
             .concat(self._mutableSets.length.toString())
       }
-      return &self._mutableSets[id] as &MutableSet.Set{MutableSet.SetPublic}
+      return &self._mutableSets[id] 
+        as &MutableMetadataSet.Set{MutableMetadataSet.Public}
     }
 
     // ========================================================================
     // Private functions
     // ========================================================================
-
-    // Get the private version of a particular set
-    pub fun getAuth(_ id: Int): &MutableSet.Set{MutableSet.SetPrivate} {
-      pre {
-        id >= 0 && id < self._mutableSets.length :
-          id
-            .toString()
-            .concat(" is not a valid set ID. Number of sets is ")
-            .concat(self._mutableSets.length.toString())
-      }
-      return &self._mutableSets[id] as &MutableSet.Set{MutableSet.SetPrivate}
-    }
 
     // Set the name of the manager
     pub fun setName(_ name: String) {
@@ -148,17 +116,9 @@ pub contract MutableSetManager {
       self._description = description
     }
 
-    // Add a mutable set to the set manager.
-    pub fun addMutableSet(_ set: @MutableSet.Set) {
-      self._mutableSets.append(<- set)
-    }
-
-    // ========================================================================
-    // Minter functions
-    // ========================================================================
-
-    // Get the minter for a particular Set
-    pub fun getSetMinter(_ id: Int): &MutableSet.Set{MutableSet.SetMinter} {
+    // Get the private version of a particular set
+    pub fun getSetMutable(_ id: Int): 
+      &MutableMetadataSet.Set{MutableMetadataSet.Public, MutableMetadataSet.Private} {
       pre {
         id >= 0 && id < self._mutableSets.length :
           id
@@ -166,8 +126,18 @@ pub contract MutableSetManager {
             .concat(" is not a valid set ID. Number of sets is ")
             .concat(self._mutableSets.length.toString())
       }
-      return &self._mutableSets[id] as &MutableSet.Set{MutableSet.SetMinter}
+      return &self._mutableSets[id] 
+        as &MutableMetadataSet.Set{MutableMetadataSet.Public, MutableMetadataSet.Private}
     }
+
+    // Add a mutable set to the set manager.
+    pub fun addSet(_ set: @MutableMetadataSet.Set) {
+      self._mutableSets.append(<- set)
+    }
+
+    // ========================================================================
+    // init/destroy
+    // ========================================================================
 
     init(name: String, description: String) {
       self._name = name
@@ -185,7 +155,8 @@ pub contract MutableSetManager {
   // ========================================================================
 
   // Create a new SetManager resource with the given name and description
-  pub fun createSetManager(name: String, description: String): @Manager {
+  pub fun create(name: String, description: String): @Manager {
     return <-create Manager(name: name, description: description)
   }
 }
+ 

@@ -1,9 +1,10 @@
-import NFTRegistry from "../../contracts/NFTRegistry.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
-pub fun main(registryAddress: Address): {String: NFTRegistry.RegistryItem} {
-    let RegistryPublicPath = NFTRegistry.StandardRegistryPublicPath
+pub fun main(registryAddress: Address): {String: NiftoryNFTRegistry.Record} {
+    let RegistryPublicPath = 
+      NiftoryNFTRegistry.PUBLIC_PATH
     let registry = getAccount(registryAddress)
       .getCapability(RegistryPublicPath)
-      .borrow<&{NFTRegistry.RegistryPublic}>()!
+      .borrow<&{NiftoryNFTRegistry.Public}>()!
     return registry.all()
 }

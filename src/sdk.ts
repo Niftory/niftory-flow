@@ -17,10 +17,15 @@ class ContractAccount extends AnyActor<ContractAccountConfig, ContractAccount> {
   deployMetadataViews = noArg(this.deploy('MetadataViews'))
   deployMutableMetadata = noArg(this.deploy('MutableMetadata'))
   deployMutableMetadataTemplate = noArg(this.deploy('MutableMetadataTemplate'))
-  deployMutableSet = noArg(this.deploy('MutableSet'))
-  deployMutableSetManager = noArg(this.deploy('MutableSetManager'))
+  deployMutableMetadataSet = noArg(this.deploy('MutableMetadataSet'))
+  deployMutableMetadataSetManager = noArg(
+    this.deploy('MutableMetadataSetManager'),
+  )
   deployMetadataViewsManager = noArg(this.deploy('MetadataViewsManager'))
-  deployNiftory = noArg(this.deploy('Niftory'))
+  deployNiftoryNonFungibleToken = noArg(this.deploy('NiftoryNonFungibleToken'))
+  deployNiftoryMetadataViewsResolvers = noArg(
+    this.deploy('NiftoryMetadataViewsResolvers'),
+  )
 }
 
 const contractAccount = (name: string): ContractAccount =>
@@ -32,7 +37,7 @@ type BrandManagerConfig = {}
 
 class BrandManager extends AnyActor<BrandManagerConfig, BrandManager> {
   getThis = (_) => new BrandManager(_)
-  deployNFTContract = noArg(this.deploy('XXTEMPLATEXX'))
+  deployNFTContract = noArg(this.deploy('NiftoryTemplate'))
 }
 
 const brandManager = (name: string): BrandManager =>
@@ -44,7 +49,7 @@ type NiftoryAdminConfig = {}
 
 class NiftoryAdmin extends AnyActor<NiftoryAdminConfig, NiftoryAdmin> {
   getThis = (_) => new NiftoryAdmin(_)
-  deployNFTRegistry = noArg(this.deploy('NFTRegistry'))
+  deployNFTRegistry = noArg(this.deploy('NiftoryNFTRegistry'))
   initialize = this.send<{}>('niftory_admin/initialize')
   register_brand = this.send<{ brand: string }>(
     'niftory_admin/register_brand',
@@ -287,11 +292,11 @@ const niftory = (address: string) => ({
     }),
 })
 
-const mutable_set_manager = (address: string, path: string) => ({
+const mutable_set_manager = (registryAddress: string, brand: string) => ({
   info: () =>
     execute({
       codePath: 'mutable_set_manager/info',
-      args: [address, path],
+      args: [registryAddress, brand],
       decoder: (data: any) => ({
         name: data.name as string,
         description: data.description as string,

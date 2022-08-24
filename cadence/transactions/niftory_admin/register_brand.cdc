@@ -1,51 +1,27 @@
-import NFTRegistry from "../../contracts/NFTRegistry.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
-transaction(brand: String) {
+transaction(contractAddress: Address, brand: String) {
+
+  let registry: &{NiftoryNFTRegistry.Private}
+
   prepare(acct: AuthAccount) {
 
-    let CollectionPublicPath = PublicPath(identifier: brand.concat("_collection"))!
-    let CollectionPrivatePath = PrivatePath(identifier: brand.concat("_collection"))!
-    let CollectionPath = StoragePath(identifier: brand.concat("_collection"))!
+    let registryPrivatePath = NiftoryNFTRegistry.PRIVATE_PATH
+    self.registry = acct
+      .getCapability(registryPrivatePath)
+      .borrow<&{NiftoryNFTRegistry.Private}>()!
+  }
 
-    let NftManagerPublicPath = PublicPath(identifier: brand.concat("_nftmanager"))!
-    let NftManagerPrivatePath = PrivatePath(identifier: brand.concat("_nftmanager"))!
-    let NftManagerPath = StoragePath(identifier: brand.concat("_nftmanager"))!
+  execute {
 
-    let SetManagerPublicPath = PublicPath(identifier: brand.concat("_setmanager"))!
-    let SetManagerPrivatePath = PrivatePath(identifier: brand.concat("_setmanager"))!
-    let SetManagerPath = StoragePath(identifier: brand.concat("_setmanager"))!
-
-    let MetadataViewsPublicPath = PublicPath(
-      identifier: brand.concat("_metadataviews")
-    )!
-    let MetadataViewsPrivatePath = PrivatePath(
-      identifier: brand.concat("_metadataviews")
-    )!
-    let MetadataViewsPath = StoragePath(identifier: brand.concat("_metadataviews"))!
-    
-    let registryItem = NFTRegistry.RegistryItem(
-      CollectionPublicPath: CollectionPublicPath,
-      CollectionPrivatePath: CollectionPrivatePath,
-      CollectionPath: CollectionPath,
-      NftManagerPublicPath: NftManagerPublicPath,
-      NftManagerPrivatePath: NftManagerPrivatePath,
-      NftManagerPath: NftManagerPath,
-      SetManagerPublicPath: SetManagerPublicPath,
-      SetManagerPrivatePath: SetManagerPrivatePath,
-      SetManagerPath: SetManagerPath,
-      MetadataViewsPublicPath: MetadataViewsPublicPath,
-      MetadataViewsPrivatePath: MetadataViewsPrivatePath,
-      MetadataViewsPath: MetadataViewsPath
+    let record = NiftoryNFTRegistry.generateRecord(
+      account: contractAddress,
+      project: brand
     )
 
-    let RegistryPrivatePath = NFTRegistry.StandardRegistryPrivatePath
-    let registry = acct
-      .getCapability(RegistryPrivatePath)
-      .borrow<&{NFTRegistry.RegistryPrivate}>()!
-
-    registry.register(
+    self.registry.register(
       brand: brand,
-      entry: registryItem
+      entry: record
     )
   }
 }

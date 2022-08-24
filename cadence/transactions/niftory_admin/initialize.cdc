@@ -1,19 +1,20 @@
-import NFTRegistry from "../../contracts/NFTRegistry.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
 transaction() {
   prepare(acct: AuthAccount) {
-    let registry <- NFTRegistry.newRegistry()
+    let registry <- NiftoryNFTRegistry.create()
 
-    let storagePath = NFTRegistry.StandardRegistryPath
-    let publicPath = NFTRegistry.StandardRegistryPublicPath
-    let privatePath = NFTRegistry.StandardRegistryPrivatePath
+    let storagePath = NiftoryNFTRegistry.STORAGE_PATH
+    let publicPath = NiftoryNFTRegistry.PUBLIC_PATH
+    let privatePath = NiftoryNFTRegistry.PRIVATE_PATH
 
     acct.save(<-registry, to: storagePath)
     acct.link<&{
-      NFTRegistry.RegistryPublic
+      NiftoryNFTRegistry.Public
     }>(publicPath, target: storagePath)
     acct.link<&{
-      NFTRegistry.RegistryPrivate
+      NiftoryNFTRegistry.Public,
+      NiftoryNFTRegistry.Private
     }>(privatePath, target: storagePath)
   }
 }

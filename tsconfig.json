@@ -25,6 +25,7 @@
     "allowJs": true,
     "noImplicitAny": false
   },
+  "include": ["src", "tests", "scripts"],
   "exclude": [
     "**/.cookiecutter/**",
     "**/node_modules",
