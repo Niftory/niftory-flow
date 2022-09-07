@@ -27,6 +27,7 @@ import NonFungibleToken from "./NonFungibleToken.cdc"
 import MetadataViews from "./MetadataViews.cdc"
 
 import MutableMetadata from "./MutableMetadata.cdc"
+import MutableMetadataTemplate from "./MutableMetadataTemplate.cdc"
 import MutableMetadataSet from "./MutableMetadataSet.cdc"
 import MutableMetadataSetManager from "./MutableMetadataSetManager.cdc"
 
@@ -44,14 +45,16 @@ pub contract NiftoryNonFungibleToken {
     // Unique ID of the NFT
     pub let id: UInt64
 
+    //
+    pub let setId: Int
+
+    //
+    pub let templateId: Int
+
     // Serial number of the NFT. If multiple NFTs are meant to represent the
     // exact same 'entity' or set of metadata, then serial number should be used
     // to distinguish them. This will likely always be 1 for PFPs.
     pub let serial: UInt64
-
-    // A 'pointer' to this NFTs metadata. Metadata is stored as part of
-    // MutableMetadataManager. Please see that contract for more details.
-    pub let metadataAccessor: MutableMetadataSetManager.Accessor
 
     // Contract public information
     pub fun contract(): &{ManagerPublic}
@@ -140,23 +143,87 @@ pub contract NiftoryNonFungibleToken {
   pub resource interface ManagerPrivate {
 
     // Set arbitrary metadata for this NFT contract, if implemented
-    pub fun setMetadata(_ metadata: AnyStruct?)
+    pub fun modifyContractMetadata(): auth &AnyStruct
 
-    // Mint an NFT with the given MutableSetManager.MetadataAccessor token. 
-    // This token lets the NFT know which metadata template is being referred
-    // to. If desired, the "template" (MutableMetadataTemplate) provides an
-    // easy way to limit the amount of a particular NFT that can be minted.
-    // Multiple NFTs minted from the same Template can also use that Template
-    // determine the serial number of a given NFT.
-    pub fun mint(
-      metadataAccessor: MutableMetadataSetManager.Accessor,
-    ): @NonFungibleToken.NFT
+    // Set arbitrary metadata for this NFT contract, if implemented
+    pub fun replaceContractMetadata(_ metadata: AnyStruct?)
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    // MetadataViewsManager privileges
+    //
+    // Lock MetadataViewsResolver so that resolvers can be neither added nor removed
+    pub fun lockMetadataViewsManager()
+
+    // Add the given resolver to the MetadataViewsResolver if not locked
+    pub fun setMetadataViewsResolver(_ resolver: {MetadataViewsManager.Resolver})
+
+    // Remove the given resolver from the MetadataViewsResolver if not locked
+    pub fun removeMetadataViewsResolver(_ type: Type)
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    // MutableMetadataSetManager privileges
+    //
+    //
+    pub fun setMetadataManagerName(_ name: String)
+
+    //
+    pub fun setMetadataManagerDescription(_ description: String)
+
+    //
+    pub fun addSet(_ set: @MutableMetadataSet.Set)
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    // MutableMetadataSet privileges
+    //
+    //
+    pub fun lockSet(setId: Int)
+
+    //
+    pub fun lockSetMetadata(setId: Int)
+
+    // 
+    pub fun modifySetMetadata(setId: Int): auth &AnyStruct
+    
+    //
+    pub fun replaceSetMetadata(setId: Int, new: AnyStruct)
+
+    //
+    pub fun addTemplate(setId: Int, template: @MutableMetadataTemplate.Template)
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    // MutableMetadataTemplate privileges
+    //
+    //
+    pub fun lockTemplate(setId: Int, templateId: Int)
+
+    //
+    pub fun setTemplateMaxMint(setId: Int, templateId: Int, max: UInt64)
+
+    //
+    pub fun mint(setId: Int, templateId: Int): @NonFungibleToken.NFT
     
     // Same as mint from above, but an optimized version to do bulk mints.
     pub fun mintBulk(
-      metadataAccessor: MutableMetadataSetManager.Accessor,
+      setId: Int,
+      templateId: Int,
       numToMint: UInt64,
     ): @[NonFungibleToken.NFT]
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    // MutableMetadata privileges
+    //
+    //
+    pub fun lockNFTMetadata(setId: Int, templateId: Int)
+
+    //
+    pub fun modifyNFTMetadata(setId: Int, templateId: Int): auth &AnyStruct
+    
+    //
+    pub fun replaceNFTMetadata(setId: Int, templateId: Int, new: AnyStruct)
   }
 }
- 

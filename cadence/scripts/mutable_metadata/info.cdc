@@ -1,4 +1,4 @@
-import MutableSetManager from "../../contracts/MutableSetManager.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
 pub struct TemplateInfo {
   pub let locked: Bool
@@ -15,13 +15,10 @@ pub struct TemplateInfo {
   }
 }
 
-pub fun main(address: Address, path: String, setId: Int, templateId: Int): TemplateInfo {
-  let publicPath = PublicPath(identifier: path)!
-  let manager = getAccount(address)
-    .getCapability(publicPath)
-    .borrow<&MutableSetManager.Manager{MutableSetManager.ManagerPublic}>()!
-  let set = manager.get(setId)
-  let template = set.get(templateId)
+pub fun main(registryAddress: Address, brand: String, setId: Int, templateId: Int): TemplateInfo {
+  let manager = NiftoryNFTRegistry.getSetManagerPublic(registryAddress, brand)
+  let set = manager.getSet(setId)
+  let template = set.getTemplate(templateId)
 
   return TemplateInfo(
     locked: template.locked(),

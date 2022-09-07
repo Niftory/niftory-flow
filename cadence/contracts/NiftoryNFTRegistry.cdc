@@ -117,27 +117,28 @@ pub contract NiftoryNFTRegistry {
     }
   }
 
-  pub struct Accessor {
-    pub let account: Address
-    pub let brand: String
-    init(account: Address, brand: String) {
-      self.account = account
-      self.brand = brand
-    }
-  }
-
   // ========================================================================
   // Registry
   // ========================================================================
 
   pub resource interface Public {
+
+    // Return all entries from the registry
     pub fun all(): {String: Record}
+
+    // Return information for a particular brand in the registry
     pub fun infoFor(_ brand: String): Record
   }
 
   pub resource interface Private {
+
+    // Get a modifiable ref of the underlying registry
     pub fun auth(): auth &{String: Record}
+
+    // Register a new brand
     pub fun register(brand: String, entry: Record)
+
+    // Deregister an existing brand
     pub fun deregister(_ brand: String)
   }
 
@@ -155,12 +156,10 @@ pub contract NiftoryNFTRegistry {
     // Public
     // ========================================================================
 
-    // Return all entries from the registry
     pub fun all(): {String: Record} {
       return self._registry
     }
 
-    // Return information for a particular brand in the registry
     pub fun infoFor(_ brand: String): Record {
       pre {
         self._registry.containsKey(brand) : 
@@ -173,17 +172,14 @@ pub contract NiftoryNFTRegistry {
     // Private
     // ========================================================================
 
-    // Get a modifiable ref of the underlying registry
     pub fun auth(): auth &{String: Record} {
       return &self._registry as auth &{String: Record}
     }
 
-    // Register a new brand
     pub fun register(brand: String, entry: Record) {
       self._registry[brand] = entry
     }
 
-    // Deregister an existing brand
     pub fun deregister(_ brand: String) {
       pre {
         self._registry.containsKey(brand) : 
@@ -261,36 +257,52 @@ pub contract NiftoryNFTRegistry {
     )
   }
 
-  pub fun getRegistryRecord(_ accessor: Accessor): Record {
-    let registry = getAccount(accessor.account)
-      .getCapability<&{Public}>(self.PUBLIC_PATH)
-      .borrow()!
-    return registry.infoFor(accessor.brand)
-  }
-
-  pub fun _notFoundError(_ accessor: Accessor, _ entity: String): String {
+  pub fun _notFoundError(
+    _ registryAddress: Address,
+    _ brand: String,
+    _ entity: String
+  ): String {
     return entity
       .concat(" not found for registry at ")
-      .concat(accessor.account.toString())
+      .concat(registryAddress.toString())
       .concat(" for brand ")
-      .concat(accessor.brand)
+      .concat(brand)
       .concat(".")
   }
 
-  pub fun getNFTManagerPublic(_ accessor: Accessor): 
+  pub fun getRegistryRecord(
+    _ registryAddress: Address,
+    _ brand: String
+  ): Record {
+    let registry = getAccount(registryAddress)
+      .getCapability<&{Public}>(self.PUBLIC_PATH)
+      .borrow() 
+        ?? panic(self._notFoundError(registryAddress, brand, "Registry Record"))
+    return registry.infoFor(brand)
+  }
+
+  pub fun getCollectionPaths(
+    _ registryAddress: Address,
+    _ brand: String
+  ): Paths {
+      let record = self.getRegistryRecord(registryAddress, brand)
+      return record.collectionPaths
+  }
+
+  pub fun getNFTManagerPublic(_ registryAddress: Address, _ brand: String): 
     &{NiftoryNonFungibleToken.ManagerPublic} {
-      let record = self.getRegistryRecord(accessor)
+      let record = self.getRegistryRecord(registryAddress, brand)
       let manager = getAccount(record.nftManager.account)
         .getCapability<&{NiftoryNonFungibleToken.ManagerPublic}>(
           record.nftManager.paths.public
         )
       return manager.borrow() 
-        ?? panic(self._notFoundError(accessor, "NFT Manager"))
-    }
+        ?? panic(self._notFoundError(registryAddress, brand, "NFT Manager"))
+  }
 
-  pub fun getSetManagerPublic(_ accessor: Accessor):
+  pub fun getSetManagerPublic(_ registryAddress: Address, _ brand: String):
     &MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public} {
-      let record = self.getRegistryRecord(accessor)
+      let record = self.getRegistryRecord(registryAddress, brand)
       let manager = getAccount(record.setManager.account)
         .getCapability<&
           MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public}
@@ -298,12 +310,15 @@ pub contract NiftoryNFTRegistry {
           record.setManager.paths.public
         )
       return manager.borrow() 
-        ?? panic(self._notFoundError(accessor, "MutableMetadataSetManager"))
-    }
+        ?? panic(self._notFoundError(registryAddress, brand, "MutableMetadataSetManager"))
+  }
 
-  pub fun getMetadataViewsManagerPublic(_ accessor: Accessor):
+  pub fun getMetadataViewsManagerPublic(
+    _ registryAddress: Address,
+    _ brand: String
+  ):
     &MetadataViewsManager.Manager{MetadataViewsManager.Public} {
-      let record = self.getRegistryRecord(accessor)
+      let record = self.getRegistryRecord(registryAddress, brand)
       let manager = getAccount(record.metadataViewsManager.account)
         .getCapability<&
           MetadataViewsManager.Manager{MetadataViewsManager.Public}
@@ -311,14 +326,15 @@ pub contract NiftoryNFTRegistry {
           record.metadataViewsManager.paths.public
         )
       return manager.borrow() 
-        ?? panic(self._notFoundError(accessor, "MetadataViewsManager"))
-    }
+        ?? panic(self._notFoundError(registryAddress, brand, "MetadataViewsManager"))
+  }
 
   pub fun buildNFTCollectionData(
-    _ accessor: Accessor,
+    _ registryAddress: Address,
+    _ brand: String,
     _ createEmptyCollection: ((): @NonFungibleToken.Collection)
   ): MetadataViews.NFTCollectionData {
-    let record = self.getRegistryRecord(accessor)
+    let record = self.getRegistryRecord(registryAddress, brand)
     let paths = record.collectionPaths
     return MetadataViews.NFTCollectionData(
       storagePath: paths.storage,
@@ -357,4 +373,3 @@ pub contract NiftoryNFTRegistry {
     self.METADATA_VIEWS_MANAGER_PATH_SUFFIX = "_metadata_views_manager"
   }
 }
- 

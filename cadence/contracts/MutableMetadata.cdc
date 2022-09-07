@@ -19,13 +19,25 @@ pub contract MutableMetadata {
   // =========================================================================
 
   pub resource interface Public {
+
+    // Is this metadata locked for modification? 
     pub fun locked(): Bool
+
+    // Get a copy of the underlying metadata
     pub fun get(): AnyStruct
   }
 
   pub resource interface Private {
+
+    // Lock this metadata, preventing further modification.
     pub fun lock()
+
+    // Retrieve a modifiable version of the underlying metadata, only if the
+    // metadata has not been locked.
     pub fun getMutable(): auth &AnyStruct
+
+    // Replace the metadata entirely with a new underlying metadata AnyStruct,
+    // only if the metadata has not been locked.
     pub fun replace(_ new: AnyStruct)
   }
 
@@ -45,14 +57,11 @@ pub contract MutableMetadata {
     // Public
     // ========================================================================
 
-    // Is this metadata locked for modification? 
     pub fun locked(): Bool {
       return self._locked
     }
 
-    // Get a copy of the underlying metadata
     pub fun get(): AnyStruct {
-
       // It's important that a copy returned and not a reference.
       return self._metadata
     }
@@ -61,13 +70,10 @@ pub contract MutableMetadata {
     // Private
     // ========================================================================
 
-    // Lock this metadata, preventing further modification.
     pub fun lock() {
       self._locked = true
     }
     
-    // Retrieve a modifiable version of the underlying metadata, only if the
-    // metadata has not been locked.
     pub fun getMutable(): auth &AnyStruct {
       pre {
         !self._locked : "Metadata is locked"
@@ -75,8 +81,6 @@ pub contract MutableMetadata {
       return &self._metadata as auth &AnyStruct
     }
 
-    // Replace the metadata entirely with a new underlying metadata AnyStruct,
-    // only if the metadata has not been locked.
     pub fun replace(_ new: AnyStruct) {
       pre {
         !self._locked : "Metadata is locked"

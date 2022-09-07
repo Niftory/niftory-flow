@@ -78,18 +78,26 @@ describe('basic-test', () => {
     const bob = {
       setManagerAdmin: setManagerAdmin(
         BRAND_MANAGER_BOB,
-        'ExampleNFT_setmanager',
+        addressBook.alice,
+        'NiftoryTemplate',
       ),
       metadataViewsAdmin: metadataViewsManagerAdmin(
         BRAND_MANAGER_BOB,
-        'ExampleNFT_setmanager',
+        addressBook.alice,
+        'NiftoryTemplate',
       ),
       set: ({ setId }: { setId: number }) => ({
-        admin: setAdmin(BRAND_MANAGER_BOB, 'ExampleNFT_setmanager', setId),
+        admin: setAdmin(
+          BRAND_MANAGER_BOB,
+          addressBook.alice,
+          'NiftoryTemplate',
+          setId,
+        ),
         template: ({ templateId }: { templateId: number }) => ({
           admin: templateAdmin(
             BRAND_MANAGER_BOB,
-            'ExampleNFT_setmanager',
+            addressBook.alice,
+            'NiftoryTemplate',
             setId,
             templateId,
           ),
@@ -99,30 +107,42 @@ describe('basic-test', () => {
     }
 
     const carol = {
-      collector: collector(COLLECTOR_CAROL),
+      collector: collector(
+        COLLECTOR_CAROL,
+        addressBook.alice,
+        'NiftoryTemplate',
+      ),
     }
 
     const charlie = {
-      collector: collector(COLLECTOR_CHARLIE),
+      collector: collector(
+        COLLECTOR_CHARLIE,
+        addressBook.alice,
+        'NiftoryTemplate',
+      ),
     }
 
     const q = {
       nfts: {
         x: {
-          setManager: mutable_set_manager(addressBook.bob, 'NiftoryTemplate'),
+          setManager: mutable_set_manager(addressBook.alice, 'NiftoryTemplate'),
           set: ({ setId }: { setId: number }) => ({
-            info: mutable_set(addressBook.bob, 'ExampleNFT_setmanager', setId),
+            info: mutable_set(addressBook.alice, 'NiftoryTemplate', setId),
             template: ({ templateId }: { templateId: number }) => ({
               info: mutable_metadata(
-                addressBook.bob,
-                'ExampleNFT_setmanager',
+                addressBook.alice,
+                'NiftoryTemplate',
                 setId,
                 templateId,
               ),
             }),
           }),
           collection: ({ collectorAddress }: { collectorAddress: string }) => ({
-            info: collection(collectorAddress, 'ExampleNFT_collection'),
+            info: collection(
+              addressBook.alice,
+              'NiftoryTemplate',
+              collectorAddress,
+            ),
           }),
         },
       },
@@ -157,8 +177,10 @@ describe('basic-test', () => {
     await alice.niftoryAdmin
       .deployNFTRegistry()
       .initialize({})
-      .register_brand({ brand: 'NiftoryTemplate' })
-      .log()
+      .register_brand({
+        contractAddress: addressBook.bob,
+        brand: 'NiftoryTemplate',
+      })
       .do(checkContextAlive)
       .do(checkSuccessfulTransactions(3))
       .wait()
@@ -174,12 +196,11 @@ describe('basic-test', () => {
       .wait()
     await q.nfts.x.setManager
       .info()
-      .then(log)
       .then(checkScriptSucceeded)
       .then(
         checkScriptValue({
-          name: 'XXTEMPLATEXX',
-          description: 'The set manager for XXTEMPLATEXX.',
+          name: 'NiftoryTemplate',
+          description: 'The set manager for NiftoryTemplate.',
           numSets: 0,
         }),
       )
@@ -188,6 +209,7 @@ describe('basic-test', () => {
     await bob.setManagerAdmin
       .set_name({ name: 'Set Manager 2' })
       .set_description({ description: 'This is a mutable set manager' })
+      .log()
       .do(checkSuccessfulTransactions(2))
       .wait()
     await q.nfts.x.setManager
@@ -322,6 +344,7 @@ describe('basic-test', () => {
       .set_field({ key: 'key2', value: 'value2' })
       .set_field({ key: 'key3', value: 'value3' })
       .delete_field({ key: 'key2' })
+      .log()
       .do(checkSuccessfulTransactions(4))
       .wait()
     await q.nfts.x
@@ -384,9 +407,13 @@ describe('basic-test', () => {
 
     // Carol and Charlie will initialize their NFT Collections.
     // They should have zero NFTs to start with
-    await carol.collector.initialize().do(checkSuccessfulTransactions(1)).wait()
+    await carol.collector
+      .initialize({})
+      .log()
+      .do(checkSuccessfulTransactions(1))
+      .wait()
     await charlie.collector
-      .initialize()
+      .initialize({})
       .do(checkSuccessfulTransactions(1))
       .wait()
     await q.nfts.x
@@ -413,14 +440,12 @@ describe('basic-test', () => {
       .mint({
         setId: 0,
         templateId: 0,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
       })
       .mint({
         setId: 0,
         templateId: 0,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
       })
       .do(checkSuccessfulTransactions(2))
       .wait()
@@ -438,41 +463,35 @@ describe('basic-test', () => {
       .mint_bulk({
         setId: 0,
         templateId: 0,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
         numToMint: 10,
       })
       .mint({
         setId: 0,
         templateId: 0,
-        collector: addressBook.charlie,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.charlie,
       })
       .mint({
         setId: 0,
         templateId: 0,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
       })
       .mint_bulk({
         setId: 0,
         templateId: 0,
-        collector: addressBook.charlie,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.charlie,
         numToMint: 9,
       })
       .mint_bulk({
         setId: 0,
         templateId: 0,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
         numToMint: 19,
       })
       .mint_bulk({
         setId: 0,
         templateId: 0,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
         numToMint: 18,
       })
       .do(checkContextAlive)
@@ -481,6 +500,7 @@ describe('basic-test', () => {
     await q.nfts.x
       .collection({ collectorAddress: addressBook.carol })
       .info.info()
+      .then(log)
       .then(
         assertScriptValue(
           (actual) => actual.numNfts == 50 && actual.nftIds.has(59),
@@ -517,8 +537,7 @@ describe('basic-test', () => {
       .mint({
         setId: 0,
         templateId: 0,
-        collector: addressBook.charlie,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
       })
       .do(checkContextDead)
       .wait()
@@ -535,8 +554,7 @@ describe('basic-test', () => {
       .mint_bulk({
         setId: 0,
         templateId: 1,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
         numToMint: 5,
       })
       .do(checkSuccessfulTransactions(1))
@@ -545,8 +563,7 @@ describe('basic-test', () => {
       .mint({
         setId: 0,
         templateId: 1,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
       })
       .do(checkContextDead)
       .wait()
@@ -568,8 +585,7 @@ describe('basic-test', () => {
       .mint_bulk({
         setId: 0,
         templateId: 2,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
         numToMint: 5,
       })
       .do(checkSuccessfulTransactions(1))
@@ -584,8 +600,7 @@ describe('basic-test', () => {
       .mint({
         setId: 0,
         templateId: 2,
-        collector: addressBook.carol,
-        collectionPath: 'ExampleNFT_collection',
+        collectorAddress: addressBook.carol,
       })
       .do(checkContextDead)
       .wait()
@@ -602,11 +617,11 @@ describe('basic-test', () => {
 
     // Carol will transfer 10 NFTs to Charlie.
     await carol.collector
-      .transfer({
-        recipient: addressBook.charlie,
-        collectionPath: 'ExampleNFT_collection',
+      .transfer_bulk({
+        recipientAddress: addressBook.charlie,
         ids: [30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
       })
+      .log()
       .do(checkSuccessfulTransactions(1))
       .wait()
     await q.nfts.x
@@ -616,9 +631,8 @@ describe('basic-test', () => {
 
     // Carol can't transfer what she doesn't have
     await carol.collector
-      .transfer({
-        recipient: addressBook.charlie,
-        collectionPath: 'ExampleNFT_collection',
+      .transfer_bulk({
+        recipientAddress: addressBook.charlie,
         ids: [30],
       })
       .do(checkContextDead)
@@ -782,9 +796,9 @@ describe('basic-test', () => {
       .info.collection_data(60)
       .then(
         checkScriptValue({
-          storagePath: '/storage/ExampleNFT_collection',
-          publicPath: '/public/ExampleNFT_collection',
-          providerPath: '/private/ExampleNFT_collection',
+          storagePath: '/storage/NiftoryTemplate_nft_collection',
+          publicPath: '/public/NiftoryTemplate_nft_collection',
+          providerPath: '/private/NiftoryTemplate_nft_collection',
         }),
       )
 

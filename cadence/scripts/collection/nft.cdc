@@ -1,4 +1,5 @@
-import Niftory from "../../contracts/Niftory.cdc"
+import NiftoryNonFungibleToken from "../../contracts/NiftoryNonFungibleToken.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
 pub struct NFTInfo {
   pub let id: UInt64
@@ -28,20 +29,21 @@ pub struct NFTInfo {
 }
 
 pub fun main(
+  registryAddress: Address,
+  brand: String,
   collectionAddress: Address,
-  collectionPath: String,
   nftId: UInt64
 ): NFTInfo {
-  let collectionPublicPath = PublicPath(identifier: collectionPath)!
+  let paths = NiftoryNFTRegistry.getCollectionPaths(registryAddress, brand)
   let collection = getAccount(collectionAddress)
-    .getCapability(collectionPublicPath)
-    .borrow<&{Niftory.CollectionPublic}>()!
+    .getCapability(paths.public)
+    .borrow<&{NiftoryNonFungibleToken.CollectionPublic}>()!
   let nft = collection.borrow(id: nftId)
   return NFTInfo(
     id: nft.id,
     serial: nft.serial,
-    setId: nft.metadataAccessor.setId,
-    templateId: nft.metadataAccessor.templateId,
+    setId: nft.setId,
+    templateId: nft.templateId,
     metadata: nft.metadata().get(),
     setMetadata: nft.set().metadata().get(),
     views: nft.getViews()

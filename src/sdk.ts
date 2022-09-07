@@ -15,12 +15,14 @@ class ContractAccount extends AnyActor<ContractAccountConfig, ContractAccount> {
   getThis = (_) => new ContractAccount(_)
   deployNonFungibleToken = noArg(this.deploy('NonFungibleToken'))
   deployMetadataViews = noArg(this.deploy('MetadataViews'))
+
   deployMutableMetadata = noArg(this.deploy('MutableMetadata'))
   deployMutableMetadataTemplate = noArg(this.deploy('MutableMetadataTemplate'))
   deployMutableMetadataSet = noArg(this.deploy('MutableMetadataSet'))
   deployMutableMetadataSetManager = noArg(
     this.deploy('MutableMetadataSetManager'),
   )
+
   deployMetadataViewsManager = noArg(this.deploy('MetadataViewsManager'))
   deployNiftoryNonFungibleToken = noArg(this.deploy('NiftoryNonFungibleToken'))
   deployNiftoryMetadataViewsResolvers = noArg(
@@ -51,9 +53,9 @@ class NiftoryAdmin extends AnyActor<NiftoryAdminConfig, NiftoryAdmin> {
   getThis = (_) => new NiftoryAdmin(_)
   deployNFTRegistry = noArg(this.deploy('NiftoryNFTRegistry'))
   initialize = this.send<{}>('niftory_admin/initialize')
-  register_brand = this.send<{ brand: string }>(
+  register_brand = this.send<{ brand: string; contractAddress: string }>(
     'niftory_admin/register_brand',
-    (_) => [_.brand],
+    (_) => [_.contractAddress, _.brand],
   )
   deregister_brand = this.send<{ brand: string }>(
     'niftory_admin/deregister_brand',
@@ -67,59 +69,70 @@ const niftoryAdmin = (name: string): NiftoryAdmin =>
 // =============================================================================
 
 type SetManagerAdminConfig = {
-  path: string
+  registryAddress: string
+  brand: string
 }
 
 class SetManagerAdmin extends AnyActor<SetManagerAdminConfig, SetManagerAdmin> {
   getThis = (_) => new SetManagerAdmin(_)
   initialize = this.send<{ name: string; description: string }>(
     'set_manager_admin/initialize',
-    (_) => [_.path, _.name, _.description],
+    (_) => [_.registryAddress, _.brand, _.name, _.description],
   )
   set_name = this.send<{ name: string }>('set_manager_admin/set_name', (_) => [
-    _.path,
+    _.registryAddress,
+    _.brand,
     _.name,
   ])
   set_description = this.send<{ description: string }>(
     'set_manager_admin/set_description',
-    (_) => [_.path, _.description],
+    (_) => [_.registryAddress, _.brand, _.description],
   )
   add_set = this.send<{
     initialMetadata: { [key: string]: string }
-  }>('set_manager_admin/add_set', (_) => [_.path, _.initialMetadata])
+  }>('set_manager_admin/add_set', (_) => [
+    _.registryAddress,
+    _.brand,
+    _.initialMetadata,
+  ])
   mint = this.send<{
     setId: number
     templateId: number
-    collector: string
-    collectionPath: string
-  }>('set_manager_admin/mint', (_) => [
+    collectorAddress: string
+  }>('template_admin/mint', (_) => [
+    _.registryAddress,
+    _.brand,
     _.setId,
     _.templateId,
-    _.collector,
-    _.collectionPath,
+    _.collectorAddress,
   ])
   mint_bulk = this.send<{
     setId: number
     templateId: number
-    collector: string
-    collectionPath: string
+    collectorAddress: string
     numToMint: number
-  }>('set_manager_admin/mint_bulk', (_) => [
+  }>('template_admin/mint_bulk', (_) => [
+    _.registryAddress,
+    _.brand,
     _.setId,
     _.templateId,
-    _.collector,
-    _.collectionPath,
+    _.collectorAddress,
     _.numToMint,
   ])
 }
 
-const setManagerAdmin = (name: string, path: string): SetManagerAdmin =>
-  new SetManagerAdmin({ name, context, config: { path } })
+const setManagerAdmin = (
+  name: string,
+  registryAddress: string,
+  brand: string,
+): SetManagerAdmin =>
+  new SetManagerAdmin({ name, context, config: { registryAddress, brand } })
 
 // =============================================================================
 
 type MetadataViewsManagerAdminConfig = {
-  path: string
+  registryAddress: string
+  brand: string
 }
 
 class MetadataViewsManagerAdmin extends AnyActor<
@@ -132,8 +145,9 @@ class MetadataViewsManagerAdmin extends AnyActor<
     receiverPath: string
     cut: string
     description: string
-  }>('metadataviews_manager_admin/set_royalty_resolver', (_) => [
-    _.path,
+  }>('metadataviews_manager_admin/royalties/set', (_) => [
+    _.registryAddress,
+    _.brand,
     _.receiverAddress,
     _.receiverPath,
     _.cut,
@@ -146,8 +160,9 @@ class MetadataViewsManagerAdmin extends AnyActor<
     defaultTitle: string
     defaultDescription: string
     defaultIpfsImage: string
-  }>('metadataviews_manager_admin/set_ipfs_display_resolver', (_) => [
-    _.path,
+  }>('metadataviews_manager_admin/ipfs_display/set', (_) => [
+    _.registryAddress,
+    _.brand,
     _.titleField,
     _.descriptionField,
     _.ipfsImageField,
@@ -156,33 +171,40 @@ class MetadataViewsManagerAdmin extends AnyActor<
     _.defaultIpfsImage,
   ])
   set_collection_data_resolver = this.send<{}>(
-    'metadataviews_manager_admin/set_collection_data_resolver',
-    (_) => [_.path],
+    'metadataviews_manager_admin/collection_data/set',
+    (_) => [_.registryAddress, _.brand],
   )
   remove_collection_data_resolver = this.send<{}>(
-    'metadataviews_manager_admin/remove_collection_data_resolver',
-    (_) => [_.path],
+    'metadataviews_manager_admin/collection_data/remove',
+    (_) => [_.registryAddress, _.brand],
   )
   remove_ipfs_display_resolver = this.send<{}>(
-    'metadataviews_manager_admin/remove_ipfs_display_resolver',
-    (_) => [_.path],
+    'metadataviews_manager_admin/ipfs_display/remove',
+
+    (_) => [_.registryAddress, _.brand],
   )
   remove_royalty_resolver = this.send<{}>(
-    'metadataviews_manager_admin/remove_royalty_resolver',
-    (_) => [_.path],
+    'metadataviews_manager_admin/royalties/remove',
+    (_) => [_.registryAddress, _.brand],
   )
 }
 
 const metadataViewsManagerAdmin = (
   name: string,
-  path: string,
+  registryAddress: string,
+  brand: string,
 ): MetadataViewsManagerAdmin =>
-  new MetadataViewsManagerAdmin({ name, context, config: { path } })
+  new MetadataViewsManagerAdmin({
+    name,
+    context,
+    config: { registryAddress, brand },
+  })
 
 // =============================================================================
 
 type SetAdminConfig = {
-  path: string
+  registryAddress: string
+  brand: string
   setId: number
 }
 
@@ -192,22 +214,31 @@ class SetAdmin extends AnyActor<SetAdminConfig, SetAdmin> {
     initialMetadata: { [key: string]: string }
     maxMint?: number
   }>('set_admin/add_template', (_) => [
-    _.path,
+    _.registryAddress,
+    _.brand,
     _.setId,
     _.initialMetadata,
     _.maxMint,
   ])
 
-  lock = noArg(this.send('set_admin/lock', (_) => [_.path, _.setId]))
+  lock = noArg(
+    this.send('set_admin/lock', (_) => [_.registryAddress, _.brand, _.setId]),
+  )
 }
 
-const setAdmin = (name: string, path: string, setId: number): SetAdmin =>
-  new SetAdmin({ name, context, config: { path, setId } })
+const setAdmin = (
+  name: string,
+  registryAddress: string,
+  brand: string,
+  setId: number,
+): SetAdmin =>
+  new SetAdmin({ name, context, config: { registryAddress, brand, setId } })
 
 // =============================================================================
 
 type TemplateAdminConfig = {
-  path: string
+  registryAddress: string
+  brand: string
   setId: number
   templateId: number
 }
@@ -215,57 +246,87 @@ type TemplateAdminConfig = {
 class TemplateAdmin extends AnyActor<TemplateAdminConfig, TemplateAdmin> {
   getThis = (_) => new TemplateAdmin(_)
   lock_template = noArg(
-    this.send('template_admin/lock_template', (_) => [
-      _.path,
+    this.send('template_admin/lock', (_) => [
+      _.registryAddress,
+      _.brand,
       _.setId,
       _.templateId,
     ]),
   )
   lock_metadata = noArg(
-    this.send('template_admin/lock_metadata', (_) => [
-      _.path,
+    this.send('metadata_admin/lock', (_) => [
+      _.registryAddress,
+      _.brand,
       _.setId,
       _.templateId,
     ]),
   )
   delete_field = this.send<{ key: string }>(
-    'template_admin/delete_field',
-    (_) => [_.path, _.setId, _.templateId, _.key],
+    'metadata_admin/delete_field',
+    (_) => [_.registryAddress, _.brand, _.setId, _.templateId, _.key],
   )
   set_field = this.send<{ key: string; value: string }>(
-    'template_admin/set_field',
-    (_) => [_.path, _.setId, _.templateId, _.key, _.value],
+    'metadata_admin/set_field',
+    (_) => [_.registryAddress, _.brand, _.setId, _.templateId, _.key, _.value],
   )
   replace_metadata = this.send<{ metadata: { [key: string]: string } }>(
-    'template_admin/replace_metadata',
-    (_) => [_.path, _.setId, _.templateId, _.metadata],
+    'metadata_admin/replace_metadata',
+    (_) => [_.registryAddress, _.brand, _.setId, _.templateId, _.metadata],
   )
 }
 
 const templateAdmin = (
   name: string,
-  path: string,
+  registryAddress: string,
+  brand: string,
   setId: number,
   templateId: number,
 ): TemplateAdmin =>
-  new TemplateAdmin({ name, context, config: { path, setId, templateId } })
+  new TemplateAdmin({
+    name,
+    context,
+    config: { registryAddress, brand, setId, templateId },
+  })
 
 // =============================================================================
 
-type CollectorConfig = {}
+type CollectorConfig = {
+  registryAddress: string
+  brand: string
+}
 
 class Collector extends AnyActor<CollectorConfig, Collector> {
   getThis = (_) => new Collector(_)
-  initialize = noArg(this.send('collector/initialize'))
+  initialize = this.send<{}>('collector/initialize', (_) => [
+    _.registryAddress,
+    _.brand,
+  ])
   transfer = this.send<{
-    recipient: string
-    collectionPath: string
+    recipientAddress: string
+    id: number
+  }>('collector/transfer', (_) => [
+    _.registryAddress,
+    _.brand,
+    _.recipientAddress,
+    _.id,
+  ])
+  transfer_bulk = this.send<{
+    recipientAddress: string
     ids: number[]
-  }>('collector/transfer', (_) => [_.recipient, _.collectionPath, _.ids])
+  }>('collector/transfer_bulk', (_) => [
+    _.registryAddress,
+    _.brand,
+    _.recipientAddress,
+    _.ids,
+  ])
 }
 
-const collector = (name: string): Collector =>
-  new Collector({ name, context, config: {} })
+const collector = (
+  name: string,
+  registryAddress: string,
+  brand: string,
+): Collector =>
+  new Collector({ name, context, config: { registryAddress, brand } })
 
 // =============================================================================
 
@@ -305,11 +366,15 @@ const mutable_set_manager = (registryAddress: string, brand: string) => ({
     }),
 })
 
-const mutable_set = (address: string, path: string, setId: number) => ({
+const mutable_set = (
+  registryAddress: string,
+  brand: string,
+  setId: number,
+) => ({
   info: () =>
     execute({
       codePath: 'mutable_set/info',
-      args: [address, path, setId],
+      args: [registryAddress, brand, setId],
       decoder: (data: any) => ({
         locked: Boolean(data.locked),
         metadataLocked: Boolean(data.metadataLocked),
@@ -320,15 +385,15 @@ const mutable_set = (address: string, path: string, setId: number) => ({
 })
 
 const mutable_metadata = (
-  address: string,
-  path: string,
+  registryAddress: string,
+  brand: string,
   setId: number,
   templateId: number,
 ) => ({
   info: () =>
     execute({
       codePath: 'mutable_metadata/info',
-      args: [address, path, setId, templateId],
+      args: [registryAddress, brand, setId, templateId],
       decoder: (data: any) => ({
         locked: Boolean(data.locked),
         metadataLocked: Boolean(data.metadataLocked),
@@ -339,11 +404,15 @@ const mutable_metadata = (
     }),
 })
 
-const collection = (address: string, path: string) => ({
+const collection = (
+  registryAddress: string,
+  brand: string,
+  collectionAddress: string,
+) => ({
   info: () =>
     execute({
       codePath: 'collection/info',
-      args: [address, path],
+      args: [registryAddress, brand, collectionAddress],
       decoder: (data: any) => ({
         numNfts: Number(data.numNfts),
         nftIds: new Set<number>(data.nftIds),
@@ -352,7 +421,7 @@ const collection = (address: string, path: string) => ({
   nft: (id: number) =>
     execute({
       codePath: 'collection/nft',
-      args: [address, path, id],
+      args: [registryAddress, brand, collectionAddress, id],
       decoder: (data: any) => ({
         id: Number(data.id),
         serial: Number(data.serial),
@@ -365,8 +434,8 @@ const collection = (address: string, path: string) => ({
     }),
   royalty: (id: number) =>
     execute({
-      codePath: 'collection/royalty',
-      args: [address, path, id],
+      codePath: 'collection/metadata_views/royalty',
+      args: [registryAddress, brand, collectionAddress, id],
       decoder: (data: any) => ({
         token: data.token as string,
         receiverPath: data.receiverPath as string,
@@ -376,8 +445,8 @@ const collection = (address: string, path: string) => ({
     }),
   display: (id: number) =>
     execute({
-      codePath: 'collection/display',
-      args: [address, path, id],
+      codePath: 'collection/metadata_views/display',
+      args: [registryAddress, brand, collectionAddress, id],
       decoder: (data: any) => ({
         name: data.name as string,
         description: data.description as string,
@@ -386,8 +455,8 @@ const collection = (address: string, path: string) => ({
     }),
   collection_data: (id: number) =>
     execute({
-      codePath: 'collection/collection_data',
-      args: [address, path, id],
+      codePath: 'collection/metadata_views/collection_data',
+      args: [registryAddress, brand, collectionAddress, id],
       decoder: (data: any) => ({
         storagePath: data.storagePath as string,
         publicPath: data.publicPath as string,

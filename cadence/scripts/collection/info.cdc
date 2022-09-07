@@ -1,4 +1,5 @@
-import Niftory from "../../contracts/Niftory.cdc"
+import NiftoryNonFungibleToken from "../../contracts/NiftoryNonFungibleToken.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
 pub struct CollectionInfo {
   pub let numNfts: Int
@@ -9,11 +10,11 @@ pub struct CollectionInfo {
   }
 }
 
-pub fun main(collectionAddress: Address, collectionPath: String): CollectionInfo {
-  let collectionPublicPath = PublicPath(identifier: collectionPath)!
+pub fun main(registryAddress: Address, brand: String, collectionAddress: Address): CollectionInfo {
+  let paths = NiftoryNFTRegistry.getCollectionPaths(registryAddress, brand)
   let collection = getAccount(collectionAddress)
-    .getCapability(collectionPublicPath)
-    .borrow<&{Niftory.CollectionPublic}>()!
+    .getCapability(paths.public)
+    .borrow<&{NiftoryNonFungibleToken.CollectionPublic}>()!
   return CollectionInfo(
     numNfts: collection.getIDs().length,
     nftIds: collection.getIDs()

@@ -43,13 +43,23 @@ pub contract MetadataViewsManager {
   // ===========================================================================
 
   pub resource interface Public {
+
+    // Get all views supported by the manager
     pub fun getViews(): [Type]
+
+    // Resolve a particular view of a provided reference struct (i.e. NFT) 
     pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct?
   }
 
   pub resource interface Private {
+
+    // Lock this manager so that resolvers can be neither added nor removed
     pub fun lock()
+
+    // Add the given resolver if the manager is not locked
     pub fun addResolver(_ resolver: {Resolver})
+
+    // Remove the resolver of the provided type
     pub fun removeResolver(_ type: Type)
   }
 
@@ -69,12 +79,10 @@ pub contract MetadataViewsManager {
     // Public
     // ========================================================================
 
-    // Get all views supported by the manager
     pub fun getViews(): [Type] {
       return self._resolvers.keys
     }
 
-    // Resolve a particular view of a provided reference struct (i.e. NFT) 
     pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct? {
       let resolverRef = &self._resolvers[view] as &{Resolver}?
       if (resolverRef == nil) {
@@ -87,12 +95,10 @@ pub contract MetadataViewsManager {
     // Private
     // ========================================================================
 
-    // Lock this manager so that resolvers can be neither added nor removed
     pub fun lock() {
       self._locked = true
     }
 
-    // Add the given resolver if the manager is not locked
     pub fun addResolver(_ resolver: {Resolver}) {
       pre {
         !self._locked : "Manager is locked."
@@ -100,7 +106,6 @@ pub contract MetadataViewsManager {
       self._resolvers[resolver.type] = resolver
     }
 
-    // Remove the resolver of the provided type
     pub fun removeResolver(_ type: Type) {
       pre {
         !self._locked : "Manager is locked."
@@ -127,3 +132,4 @@ pub contract MetadataViewsManager {
     return <-create Manager()
   }
 }
+ 

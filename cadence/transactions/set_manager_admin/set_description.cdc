@@ -1,10 +1,18 @@
-import MutableSetManager from "../../contracts/MutableSetManager.cdc"
+import NiftoryNonFungibleToken from "../../contracts/NiftoryNonFungibleToken.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
-transaction(path: String, description: String) {
+transaction(registryAddress: Address, brand: String, description: String) {
+
+  let nftManager: &{NiftoryNonFungibleToken.ManagerPrivate}
+
   prepare(acct: AuthAccount) {
-    let privatePath = PrivatePath(identifier: path)!
-    let manager = acct.getCapability(privatePath)
-      .borrow<&{MutableSetManager.ManagerPrivate}>()!
-    manager.setDescription(description)
+    let record = NiftoryNFTRegistry.getRegistryRecord(registryAddress, brand)
+    self.nftManager = acct
+      .getCapability<&{NiftoryNonFungibleToken.ManagerPrivate}
+      >(record.nftManager.paths.private)
+      .borrow()!
+  }
+  execute {
+    self.nftManager.setMetadataManagerDescription(description)
   }
 }

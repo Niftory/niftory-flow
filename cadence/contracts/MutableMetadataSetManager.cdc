@@ -14,44 +14,39 @@ additional Sets and access those Sets for mutation, if allowed by the Set.
 import MutableMetadataSet from "./MutableMetadataSet.cdc"
 
 pub contract MutableMetadataSetManager {
-  
-  // ===========================================================================
-  // MetadataAccessor 
-  // ===========================================================================
-
-  // NFTs generally need an interface to a specific
-  // MutableMetadataTemplate.Template. This struct provides a container for
-  // the two values to get a Template
-  // - Set identifier
-  // - Template identifier (within that Set)
-  pub struct Accessor {
-    pub let setId: Int
-    pub let templateId: Int
-    init(
-      setId: Int,
-      templateId: Int
-    ) {
-      self.setId = setId
-      self.templateId = templateId
-    }
-  }
 
   // ===========================================================================
   // Manager
   // ===========================================================================
 
   pub resource interface Public {
+
+    // Name of this manager
     pub fun name(): String
+
+    // Description this manager
     pub fun description(): String
+
+    // Number of sets in this manager
     pub fun numSets(): Int
+
+    // Get the public version of a particular set
     pub fun getSet(_ id: Int): &MutableMetadataSet.Set{MutableMetadataSet.Public}
   }
 
   pub resource interface Private {
+    
+    // Set the name of the manager
     pub fun setName(_ name: String)
+
+    // Set the name of the description
     pub fun setDescription(_ description: String)
+
+    // Get the private version of a particular set
     pub fun getSetMutable(_ id: Int):
       &MutableMetadataSet.Set{MutableMetadataSet.Public, MutableMetadataSet.Private}
+
+    // Add a mutable set to the set manager.
     pub fun addSet(_ set: @MutableMetadataSet.Set)
   }
 
@@ -74,22 +69,18 @@ pub contract MutableMetadataSetManager {
     // Public functions
     // ========================================================================
 
-    // Name of this manager
     pub fun name(): String {
       return self._name
     }
 
-    // Description this manager
     pub fun description(): String {
       return self._description
     }
 
-    // Number of sets in this manager
     pub fun numSets(): Int {
       return self._mutableSets.length
     }
 
-    // Get the public version of a particular set
     pub fun getSet(_ id: Int): &MutableMetadataSet.Set{MutableMetadataSet.Public} {
       pre {
         id >= 0 && id < self._mutableSets.length :
@@ -106,17 +97,14 @@ pub contract MutableMetadataSetManager {
     // Private functions
     // ========================================================================
 
-    // Set the name of the manager
     pub fun setName(_ name: String) {
       self._name = name
     }
 
-    // Set the name of the description
     pub fun setDescription(_ description: String) {
       self._description = description
     }
 
-    // Get the private version of a particular set
     pub fun getSetMutable(_ id: Int): 
       &MutableMetadataSet.Set{MutableMetadataSet.Public, MutableMetadataSet.Private} {
       pre {
@@ -130,7 +118,6 @@ pub contract MutableMetadataSetManager {
         as &MutableMetadataSet.Set{MutableMetadataSet.Public, MutableMetadataSet.Private}
     }
 
-    // Add a mutable set to the set manager.
     pub fun addSet(_ set: @MutableMetadataSet.Set) {
       self._mutableSets.append(<- set)
     }
@@ -159,4 +146,3 @@ pub contract MutableMetadataSetManager {
     return <-create Manager(name: name, description: description)
   }
 }
- 

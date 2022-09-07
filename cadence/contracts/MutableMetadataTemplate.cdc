@@ -31,17 +31,34 @@ pub contract MutableMetadataTemplate {
   // ===========================================================================
 
   pub resource interface Public {
+
+    // Is this template locked for future minting? 
     pub fun locked(): Bool
+
+    // Max mint allowed for this metadata. Can be set to nil for unlimited
     pub fun maxMint(): UInt64?
+
+    // Public version of underyling MutableMetadata.Metadata
     pub fun metadata(): &MutableMetadata.Metadata{MutableMetadata.Public}
+
+    // Number of times registerMint has been called on this template
     pub fun minted(): UInt64
   }
 
   pub resource interface Private {
+
+    // Lock the metadata from any additional future minting.
     pub fun lock()
+
+    // Set the maximum mint of this template if not already set and if
+    // not locked
     pub fun setMaxMint(_ max: UInt64)
+
+    // Private version of underyling MutableMetadata.Metadata
     pub fun metadataMutable():
       &MutableMetadata.Metadata{MutableMetadata.Public, MutableMetadata.Private}
+
+    // Register a new mint.
     pub fun registerMint()
   }
 
@@ -67,23 +84,19 @@ pub contract MutableMetadataTemplate {
     // Public
     // ========================================================================
 
-    // Is this template locked for future minting? 
     pub fun locked(): Bool {
       return self._locked
     }
 
-    // Max mint allowed for this metadata. Can be set to nil for unlimited
     pub fun maxMint(): UInt64? {
       return self._maxMint
     }
 
-    // Public version of underyling MutableMetadata.Metadata
     pub fun metadata(): &MutableMetadata.Metadata{MutableMetadata.Public} {
       return &self._metadata 
         as &MutableMetadata.Metadata{MutableMetadata.Public}
     }
     
-    // Number of times registerMint has been called on this template
     pub fun minted(): UInt64 {
       return self._minted
     }
@@ -92,13 +105,10 @@ pub contract MutableMetadataTemplate {
     // Private
     // ========================================================================
     
-    // Lock the metadata from any additional future minting.
     pub fun lock() {
       self._locked = true
     }
     
-    // Set the maximum mint of this template if not already set and if
-    // not locked
     pub fun setMaxMint(_ max: UInt64) {
       pre {
         self._maxMint == nil: "maxMint already set"
@@ -108,7 +118,6 @@ pub contract MutableMetadataTemplate {
       self._maxMint = max
     }
 
-    // Private version of underyling MutableMetadata.Metadata
     pub fun metadataMutable(): 
       &MutableMetadata.Metadata{MutableMetadata.Public, MutableMetadata.Private}
     {
@@ -116,7 +125,6 @@ pub contract MutableMetadataTemplate {
         as &MutableMetadata.Metadata{MutableMetadata.Public, MutableMetadata.Private}
     }
 
-    // Register a new mint.
     pub fun registerMint() {
       pre {
         self._maxMint == nil || self._minted < self._maxMint! :

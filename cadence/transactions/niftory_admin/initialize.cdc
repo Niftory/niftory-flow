@@ -3,7 +3,6 @@ import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 transaction() {
   prepare(acct: AuthAccount) {
     let registry <- NiftoryNFTRegistry.create()
-
     let storagePath = NiftoryNFTRegistry.STORAGE_PATH
     let publicPath = NiftoryNFTRegistry.PUBLIC_PATH
     let privatePath = NiftoryNFTRegistry.PRIVATE_PATH

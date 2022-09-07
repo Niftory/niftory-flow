@@ -1,14 +1,28 @@
 import MutableMetadata from "../../contracts/MutableMetadata.cdc"
-import MutableSet from "../../contracts/MutableSet.cdc"
-import MutableSetManager from "../../contracts/MutableSetManager.cdc"
+import MutableMetadataSet from "../../contracts/MutableMetadataSet.cdc"
 
-transaction(path: String, initialMetadata: {String: String}) {
+import NiftoryNonFungibleToken from "../../contracts/NiftoryNonFungibleToken.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
+
+transaction(
+  registryAddress: Address,
+  brand: String,
+  initialMetadata: {String: String}
+) {
+
+  let nftManager: &{NiftoryNonFungibleToken.ManagerPrivate}
+
   prepare(acct: AuthAccount) {
-    let privatePath = PrivatePath(identifier: path)!
-    let mutableMetadata <- MutableMetadata.createMetadata(metadata: initialMetadata)
-    let mutableSet <- MutableSet.createSet( metadata: <- mutableMetadata)
-    let manager = acct.getCapability(privatePath)
-      .borrow<&{MutableSetManager.ManagerPrivate}>()!
-    manager.addMutableSet(<- mutableSet)
+    let record = NiftoryNFTRegistry.getRegistryRecord(registryAddress, brand)
+    self.nftManager = acct
+      .getCapability<&{NiftoryNonFungibleToken.ManagerPrivate}
+      >(record.nftManager.paths.private)
+      .borrow()!
+  }
+
+  execute {
+    let mutableMetadata <- MutableMetadata.create(metadata: initialMetadata)
+    let mutableSet <- MutableMetadataSet.create( metadata: <- mutableMetadata)
+    self.nftManager.addSet(<-mutableSet)
   }
 }

@@ -24,20 +24,38 @@ pub contract MutableMetadataSet {
   // ===========================================================================
 
   pub resource interface Public {
+
+    // Is this set locked from more Templates being added?
     pub fun locked(): Bool
+
+    // Number of Templates in this set
     pub fun numTemplates(): Int
+    
+    // Public version of underyling MutableMetadata.Metadata
     pub fun metadata():
       &MutableMetadata.Metadata{MutableMetadata.Public}
+    
+    // Retrieve the public version of a particular template given by the
+    // Template ID (index into the self._templates array) only if it exists
     pub fun getTemplate(_ id: Int):
       &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public}
   }
 
   pub resource interface Private {
+
+    // Lock this set so more Templates may not be added to it.
     pub fun lock()
+
+    // Private version of underyling MutableMetadata.Metadata
     pub fun metadataMutable():
       &MutableMetadata.Metadata{MutableMetadata.Public, MutableMetadata.Private}
+
+    // Retrieve the private version of a particular template given by the
+    // Template ID (index into the self._templates array) only if it exists
     pub fun getTemplateMutable(_ id: Int):
       &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public, MutableMetadataTemplate.Private} 
+
+    // Add a Template to this set if not locked
     pub fun addTemplate(_ template: @MutableMetadataTemplate.Template)
   }
 
@@ -60,24 +78,19 @@ pub contract MutableMetadataSet {
     // Public
     // ========================================================================
 
-    // Is this set locked from more Templates being added?
     pub fun locked(): Bool {
       return self._locked
     }
     
-    // Number of Templates in this set
     pub fun numTemplates(): Int {
       return self._templates.length
     }
 
-    // Public version of underyling MutableMetadata.Metadata
     pub fun metadata(): &MutableMetadata.Metadata{MutableMetadata.Public} {
       return &self._metadata 
         as &MutableMetadata.Metadata{MutableMetadata.Public}
     }
 
-    // Retrieve the public version of a particular template given by the
-    // Template ID (index into the self._templates array) only if it exists
     pub fun getTemplate(_ id: Int):
       &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public}
     {
@@ -96,20 +109,16 @@ pub contract MutableMetadataSet {
     // Private
     // ========================================================================
 
-    // Lock this set so more Templates may not be added to it.
     pub fun lock() {
       self._locked = true
     }
 
-    // Private version of underyling MutableMetadata.Metadata
     pub fun metadataMutable():
       &MutableMetadata.Metadata{MutableMetadata.Public, MutableMetadata.Private}
     {
       return &self._metadata as &MutableMetadata.Metadata
     }
     
-    // Retrieve the private version of a particular template given by the
-    // Template ID (index into the self._templates array) only if it exists
     pub fun getTemplateMutable(_ id: Int):
       &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public, MutableMetadataTemplate.Private}
     {
@@ -124,7 +133,6 @@ pub contract MutableMetadataSet {
         as &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public, MutableMetadataTemplate.Private} 
     }
 
-    // Add a Template to this set if not locked
     pub fun addTemplate(_ template: @MutableMetadataTemplate.Template) {
       pre {
         !self._locked : "Cannot add template. Set is locked"

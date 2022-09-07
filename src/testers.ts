@@ -29,7 +29,7 @@ const assertScriptValue =
   }
 
 const log = <T>(result: ScriptResult<T>): ScriptResult<T> => {
-  console.log(result)
+  console.log(JSON.stringify(result, null, 2))
   return result
 }
 

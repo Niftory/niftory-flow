@@ -12,11 +12,7 @@ pub struct SetManagerInfo {
 }
 
 pub fun main(registryAddress: Address, brand: String): SetManagerInfo {
-  let accessor = NiftoryNFTRegistry.Accessor(
-    registryAddress,
-    brand
-  )
-  let manager = NiftoryNFTRegistry.getSetManagerPublic(accessor)
+  let manager = NiftoryNFTRegistry.getSetManagerPublic(registryAddress, brand)
   return SetManagerInfo(
     name: manager.name(),
     description: manager.description(),

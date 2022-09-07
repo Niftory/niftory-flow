@@ -1,25 +1,30 @@
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 import MetadataViews from "../../contracts/MetadataViews.cdc"
-import Niftory from "../../contracts/Niftory.cdc"
 
-import XXTEMPLATEXX from "../../contracts/XXTEMPLATEXX.cdc"
+import NiftoryNonFungibleToken from "../../contracts/NiftoryNonFungibleToken.cdc"
+import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
-transaction() {
+transaction(
+  registryAddress: Address,
+  brand: String
+) {
+
   prepare(acct: AuthAccount) {
-    let collection <- XXTEMPLATEXX.createEmptyCollection()
-    let storagePath = XXTEMPLATEXX.CollectionPath
-    let publicPath = XXTEMPLATEXX.CollectionPublicPath
-    let privatePath = XXTEMPLATEXX.CollectionPrivatePath
-    acct.save(<-collection, to: storagePath)
+    let nftManager = NiftoryNFTRegistry
+      .getNFTManagerPublic(registryAddress, brand)
+    let paths = NiftoryNFTRegistry
+      .getCollectionPaths(registryAddress, brand)
+    let collection <- nftManager.getNFTCollectionData().createEmptyCollection()
+    acct.save(<-collection, to: paths.storage)
     acct.link<&{
       NonFungibleToken.Receiver,
       NonFungibleToken.CollectionPublic,
       MetadataViews.ResolverCollection,
-      Niftory.CollectionPublic
-    }>(publicPath, target: storagePath)
+      NiftoryNonFungibleToken.CollectionPublic
+    }>(paths.public, target: paths.storage)
     acct.link<&{
       NonFungibleToken.Provider,
-      Niftory.CollectionPrivate
-    }>(privatePath, target: storagePath)
+      NiftoryNonFungibleToken.CollectionPrivate
+    }>(paths.private, target: paths.storage)
   }
 }
