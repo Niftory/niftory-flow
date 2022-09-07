@@ -557,3 +557,4 @@ pub contract NiftoryTemplate: NonFungibleToken {
       )
   }
 }
+ 

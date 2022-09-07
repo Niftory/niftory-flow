@@ -1,6 +1,7 @@
-import MetadataViews from "../../contracts/MetadataViews.cdc"
+import MetadataViews from "../../../contracts/MetadataViews.cdc"
 
-import Niftory from "../../contracts/Niftory.cdc"
+import NiftoryNonFungibleToken from "../../../contracts/NiftoryNonFungibleToken.cdc"
+import NiftoryNFTRegistry from "../../../contracts/NiftoryNFTRegistry.cdc"
   
 pub struct Display {
   pub let name: String
@@ -19,21 +20,33 @@ pub struct Display {
 }
 
 pub fun main(
+  registryAddress: Address,
+  brand: String,
   collectionAddress: Address,
-  collectionPath: String,
   nftId: UInt64
 ): AnyStruct {
-  let collectionPublicPath = PublicPath(identifier: collectionPath)!
+  let paths = NiftoryNFTRegistry.getCollectionPaths(registryAddress, brand)
   let collection = getAccount(collectionAddress)
-    .getCapability(collectionPublicPath)
-    .borrow<&{Niftory.CollectionPublic}>()!
+    .getCapability(paths.public)
+    .borrow<&{NiftoryNonFungibleToken.CollectionPublic}>()!
   let nft = collection.borrow(id: nftId)
   let view = Type<MetadataViews.Display>()
-  let data = nft.resolveView(view)!
+  let data = nft.resolveView(view)
+  var message = "blah"
+  if (data == nil) {
+    message = "yo"
+  }
+  return Display(
+    name: message,
+    description: "b",
+    thumbnail: "c",
+  )
+  /*
   let realData = data as! MetadataViews.Display
   return Display(
     name: realData.name,
     description: realData.description,
     thumbnail: realData.thumbnail.uri()
-  )
+  )*/
 }
+ 

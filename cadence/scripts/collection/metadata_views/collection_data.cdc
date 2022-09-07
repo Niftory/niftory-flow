@@ -1,6 +1,7 @@
-import MetadataViews from "../../contracts/MetadataViews.cdc"
+import MetadataViews from "../../../contracts/MetadataViews.cdc"
 
-import Niftory from "../../contracts/Niftory.cdc"
+import NiftoryNonFungibleToken from "../../../contracts/NiftoryNonFungibleToken.cdc"
+import NiftoryNFTRegistry from "../../../contracts/NiftoryNFTRegistry.cdc"
 
 pub struct CollectionData {
   pub let storagePath: String
@@ -18,22 +19,28 @@ pub struct CollectionData {
 }
 
 pub fun main(
+  registryAddress: Address,
+  brand: String,
   collectionAddress: Address,
-  collectionPath: String,
   nftId: UInt64
 ): AnyStruct {
-  let collectionPublicPath = PublicPath(identifier: collectionPath)!
+  let paths = NiftoryNFTRegistry.getCollectionPaths(registryAddress, brand)
   let collection = getAccount(collectionAddress)
-    .getCapability(collectionPublicPath)
-    .borrow<&{Niftory.CollectionPublic}>()!
+    .getCapability(paths.public)
+    .borrow<&{NiftoryNonFungibleToken.CollectionPublic}>()!
   let nft = collection.borrow(id: nftId)
   let view = Type<MetadataViews.NFTCollectionData>()
   let data = nft.resolveView(view)!
   let realData = data as! MetadataViews.NFTCollectionData 
 
   return CollectionData(
-    storagePath: realData.storagePath.toString() ,
-    publicPath: realData.publicPath.toString(),
-    providerPath: realData.providerPath.toString(),
+    storagePath: "a" ,
+    publicPath: "b",
+    providerPath: "c",
   )
+//  return CollectionData(
+//    storagePath: realData.storagePath.toString() ,
+//    publicPath: realData.publicPath.toString(),
+//    providerPath: realData.providerPath.toString(),
+//  )
 }

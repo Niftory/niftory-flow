@@ -51,11 +51,10 @@ const parseRawScriptResult =
 
 const execute = <T>(request: ScriptRequest<T>): Promise<ScriptResult<T>> =>
   (executeScript(request.codePath, request.args) as Promise<any[]>)
-    .then(log)
     .then(parseRawScriptResult(request.decoder))
     .then((x) => {
-      console.log('request:' + JSON.stringify(request))
-      console.log('response: ' + JSON.stringify(x))
+      console.log('SC REQ: \n' + JSON.stringify(request, null, 2))
+      console.log('SC RES: \n' + JSON.stringify(x, null, 2))
       return x
     })
 

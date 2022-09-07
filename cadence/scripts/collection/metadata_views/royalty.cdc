@@ -5,17 +5,14 @@ import NiftoryNFTRegistry from "../../../contracts/NiftoryNFTRegistry.cdc"
 
 pub struct Royalty {
   pub let token: String 
-  pub let receiverPath: String
   pub let cut: UFix64
   pub let description: String
   init(
     token: String,
-    receiverPath: String,
     cut: UFix64, 
     description: String
   ) {
     self.token = token
-    self.receiverPath = receiverPath
     self.cut = cut
     self.description = description
   }
@@ -38,7 +35,6 @@ pub fun main(
   let royalty = realData.getRoyalties()[0]
   return Royalty(
     token: royalty.receiver.borrow()!.getType().identifier,
-    receiverPath: paths.public.toString(),
     cut: royalty.cut,
     description: royalty.description
   )

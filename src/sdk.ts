@@ -154,21 +154,23 @@ class MetadataViewsManagerAdmin extends AnyActor<
     _.description,
   ])
   set_ipfs_display_resolver = this.send<{
-    titleField: string
+    nameField: string
+    defaultName: string
     descriptionField: string
-    ipfsImageField: string
-    defaultTitle: string
     defaultDescription: string
-    defaultIpfsImage: string
+    imageField: string
+    defaultImagePrefix: string
+    defaultImage: string
   }>('metadataviews_manager_admin/ipfs_display/set', (_) => [
     _.registryAddress,
     _.brand,
-    _.titleField,
+    _.nameField,
+    _.defaultName,
     _.descriptionField,
-    _.ipfsImageField,
-    _.defaultTitle,
     _.defaultDescription,
-    _.defaultIpfsImage,
+    _.imageField,
+    _.defaultImagePrefix,
+    _.defaultImage,
   ])
   set_collection_data_resolver = this.send<{}>(
     'metadataviews_manager_admin/collection_data/set',
@@ -438,7 +440,6 @@ const collection = (
       args: [registryAddress, brand, collectionAddress, id],
       decoder: (data: any) => ({
         token: data.token as string,
-        receiverPath: data.receiverPath as string,
         cut: Number(data.cut),
         description: data.description as string,
       }),

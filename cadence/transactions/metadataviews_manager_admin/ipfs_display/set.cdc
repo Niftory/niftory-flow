@@ -1,38 +1,44 @@
-import MetadataViewsManager from "../../contracts/MetadataViewsManager.cdc"
-import MetadataViews from "../../contracts/MetadataViews.cdc"
+import MetadataViewsManager from "../../../contracts/MetadataViewsManager.cdc"
+import MetadataViews from "../../../contracts/MetadataViews.cdc"
 
-import Niftory from "../../contracts/Niftory.cdc"
-import NFTRegistry from "../../contracts/NFTRegistry.cdc"
+import NiftoryNonFungibleToken from "../../../contracts/NiftoryNonFungibleToken.cdc"
+import NiftoryNFTRegistry from "../../../contracts/NiftoryNFTRegistry.cdc"
+import NiftoryMetadataViewsResolvers from "../../../contracts/NiftoryMetadataViewsResolvers.cdc"
 
 transaction(
-  metataViewsManagerPath: String,
-  titleField: String,
+  registryAddress: Address,
+  brand: String,
+  nameField: String,
+  defaultName: String,
   descriptionField: String,
-  ipfsImageField: String,
-  defaultTitle: String,
   defaultDescription: String,
-  defaultIpfsImage: String
+  imageField: String,
+  defaultImagePrefix: String,
+  defaultImage: String,
 ) {
-  prepare(acct: AuthAccount) {
-    let registry = getAccount(0x01cf0e2f2f715450).getCapability(
-      NFTRegistry.StandardRegistryPublicPath
-    ).borrow<&{NFTRegistry.RegistryPublic}>()!
-    let nftBrandMetadata = registry.infoFor(brand: "ExampleNFT")
 
-    let resolver <- Niftory.createIpfsDisplayResolver(
-      titleField: titleField,
+  let nftManager: &{NiftoryNonFungibleToken.ManagerPrivate}
+
+  prepare(acct: AuthAccount) {
+    let record = NiftoryNFTRegistry.getRegistryRecord(registryAddress, brand)
+    self.nftManager = acct
+      .getCapability<&{NiftoryNonFungibleToken.ManagerPrivate}
+      >(record.nftManager.paths.private)
+      .borrow()!
+  }
+
+  execute {
+    let resolver = NiftoryMetadataViewsResolvers.DisplayResolver(
+      nameField: nameField,
+      defaultName: defaultName,
       descriptionField: descriptionField,
-      ipfsImageField: ipfsImageField,
-      defaultTitle: defaultTitle,
       defaultDescription: defaultDescription,
-      defaultIpfsImage: defaultIpfsImage
+      imageField: imageField,
+      defaultImagePrefix: defaultImagePrefix,
+      defaultImage: defaultImage,
     )
 
-    let metadataViewsPrivatePath = nftBrandMetadata.MetadataViewsPrivatePath
-    let manager = acct.getCapability(metadataViewsPrivatePath)
-      .borrow<
-        &MetadataViewsManager.Manager{MetadataViewsManager.ManagerPrivate}
-      >()!
-    manager.addResolver(<-resolver)
+    self.nftManager.setMetadataViewsResolver(resolver)
   }
 }
+ 

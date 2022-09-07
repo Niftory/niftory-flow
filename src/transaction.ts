@@ -72,6 +72,13 @@ const sendTransaction = ({
   Promise.all(authorizers.map(getAccountAddress))
     .then((accounts) => sendTransaction_(codePath, accounts, args))
     .then(parseRawTransactionResult)
+    .then((x) => {
+      console.log(
+        'TX REQ: \n' + JSON.stringify({ codePath, authorizers, args }, null, 2),
+      )
+      console.log('TX RES: \n' + JSON.stringify(x, null, 2))
+      return x
+    })
 
 const deployContract = ({
   codePath,
