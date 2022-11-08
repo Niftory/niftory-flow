@@ -1,5 +1,4 @@
 import * as fcl from '@onflow/fcl'
-import { send as transportGRPC } from '@onflow/transport-grpc'
 import * as t from '@onflow/types'
 import { ec } from 'elliptic'
 import { SHA3 } from 'sha3'
@@ -50,56 +49,28 @@ const myAuthorizationFunction = getAuthorizationFunction(
 )
 
 const main = async () => {
-  await fcl
-    .config()
-    .put('accessNode.api', '127.0.0.1:3569')
-    .put('sdk.transport', transportGRPC)
-  const transactionId = await fcl
-    .send([
-      fcl.transaction`
+  // await fcl.config({
+  //   'accessNode.api': '127.0.0.1:3569',
+  //   'sdk.transport': transportGRPC,
+  // })
+  await fcl.config().put('accessNode.api', '127.0.0.1:8888')
+  const transactionId = await fcl.send([
+    fcl.transaction`
     transaction(number: Int, greeting: String) {
       prepare(signer: AuthAccount) {
       }
       execute {}
     }
     `,
-      fcl.args([fcl.arg(1, t.Int), fcl.arg('Hello', t.String)]),
-      fcl.proposer(myAuthorizationFunction),
-      fcl.payer(myAuthorizationFunction),
-      fcl.authorizations([myAuthorizationFunction]),
-      fcl.limit(9999),
-    ])
-    .then(fcl.decode)
+    fcl.args([fcl.arg(1, t.Int), fcl.arg('Hello', t.String)]),
+    fcl.proposer(myAuthorizationFunction),
+    fcl.payer(myAuthorizationFunction),
+    fcl.authorizations([myAuthorizationFunction]),
+    fcl.limit(9999),
+  ])
+  // .then(fcl.decode)
 
-  console.log(transactionId)
+  // console.log(transactionId)
 }
 
 main()
-
-// fcl.tx(response).onceSealed().then(console.log)
-
-/*
-const elliptic = require("elliptic");
-const sha3 = require("sha3");
-const { ec: EC } = elliptic;
-const { SHA3 } = sha3;
-const ec = new EC("p256");
-
-const hashMsgHex = (msgHex) => {
-  const sha = new SHA3(256);
-  sha.update(Buffer.from(msgHex, "hex"));
-  return sha.digest();
-};
-
-const signWithKey = (privateKey, msgHex) => {
-  console.log({ privateKey, msgHex });
-  const key = ec.keyFromPrivate(Buffer.from(privateKey, "hex"));
-  const sig = key.sign(hashMsgHex(msgHex));
-  const n = 32; // half of signature length?
-  const r = sig.r.toArrayLike(Buffer, "be", n);
-  const s = sig.s.toArrayLike(Buffer, "be", n);
-  return Buffer.concat([r, s]).toString("hex");
-};
-
-module.exports = { signWithKey };
-*/
