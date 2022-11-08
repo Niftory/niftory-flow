@@ -1,14 +1,14 @@
 /*
 MetadataViewsManager
 
-MetadataViews (please see that contract for more details) provides metadata 
+MetadataViews (please see that contract for more details) provides metadata
 standards for NFTs to implement so 3rd-party applications do not need to rely
 on the specific programmatic interfaces of a given NFT.
 
 This contract provides a way to augment an NFT contract with a customizable
-MetadataViews interface so that admins of this manager may 
+MetadataViews interface so that admins of this manager may
 add or remove NFT Resolvers. These Resolvers take an AnyStruct (likely to
-be an interface of the NFT itself) and map that AnyStruct to one of the 
+be an interface of the NFT itself) and map that AnyStruct to one of the
 MetadataViews Standards.
 
 For example, one may make a Display resolver and assume that the "AnyStruct"
@@ -23,11 +23,11 @@ import MetadataViews from "./MetadataViews.cdc"
 pub contract MetadataViewsManager {
 
   // ===========================================================================
-  // Resolver 
+  // Resolver
   // ===========================================================================
 
   // A Resolver effectively converts one struct into another. Under normal
-  // conditions, the input should be an NFT and the output should be a 
+  // conditions, the input should be an NFT and the output should be a
   // standard MetadataViews interface.
   pub struct interface Resolver {
 
@@ -47,7 +47,7 @@ pub contract MetadataViewsManager {
     // Get all views supported by the manager
     pub fun getViews(): [Type]
 
-    // Resolve a particular view of a provided reference struct (i.e. NFT) 
+    // Resolve a particular view of a provided reference struct (i.e. NFT)
     pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct?
   }
 
@@ -99,7 +99,7 @@ pub contract MetadataViewsManager {
       self._locked = true
     }
 
-    pub fun addResolver(_ resolver: {Resolver}) {
+    pub fun addResolver(_ resolver: AnyStruct{Resolver}) {
       pre {
         !self._locked : "Manager is locked."
       }
@@ -132,4 +132,3 @@ pub contract MetadataViewsManager {
     return <-create Manager()
   }
 }
- 

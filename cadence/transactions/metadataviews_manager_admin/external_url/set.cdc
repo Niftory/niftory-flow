@@ -1,6 +1,3 @@
-import FungibleToken from "../../../contracts/FungibleToken.cdc"
-import MetadataViews from "../../../contracts/MetadataViews.cdc"
-
 import NiftoryNonFungibleToken from "../../../contracts/NiftoryNonFungibleToken.cdc"
 import NiftoryNFTRegistry from "../../../contracts/NiftoryNFTRegistry.cdc"
 import NiftoryMetadataViewsResolvers from "../../../contracts/NiftoryMetadataViewsResolvers.cdc"
@@ -8,10 +5,9 @@ import NiftoryMetadataViewsResolvers from "../../../contracts/NiftoryMetadataVie
 transaction(
   registryAddress: Address,
   brand: String,
-  receiverAddress: Address,
-  receiverPath: String,
-  cut: UFix64,
-  description: String
+  urlField: String,
+  defaultPrefix: String,
+  defaultURL: String,
 ) {
 
   let nftManager: &{NiftoryNonFungibleToken.ManagerPrivate}
@@ -25,16 +21,10 @@ transaction(
   }
 
   execute {
-    let receiverPublicPath = PublicPath(identifier: receiverPath)!
-    let receiver = getAccount(receiverAddress)
-      .getCapability<&AnyResource{FungibleToken.Receiver}>(receiverPublicPath)
-    let royalty = MetadataViews.Royalty(
-        receiver: receiver,
-        cut: cut,
-        description: description
-    )
-    let resolver = NiftoryMetadataViewsResolvers.RoyaltiesResolver(
-      royalties: MetadataViews.Royalties([royalty])
+    let resolver = NiftoryMetadataViewsResolvers.ExternalURLResolver(
+      urlField,
+      defaultPrefix,
+      defaultURL,
     )
     self.nftManager.setMetadataViewsResolver(resolver)
   }

@@ -80,19 +80,19 @@ const advanceContextWithDeployment = advanceContextWith(deployContract)
 abstract class AnyActor<Config, Actor extends AnyActor<Config, Actor>> {
   constructor(
     public _: {
-      name: string
+      name: string | string[]
       context: Promise<ActorContext>
       config: Config
     },
   ) {}
 
   abstract getThis: (_: {
-    name: string
+    name: string | string[]
     context: Promise<ActorContext>
     config: Config
   }) => Actor
 
-  send =
+  _send =
     <ExtraParams>(
       codePath: string,
       asArgs: (_: Config & ExtraParams) => any[] = () => [],
@@ -104,12 +104,14 @@ abstract class AnyActor<Config, Actor extends AnyActor<Config, Actor>> {
           advanceContextWithTransaction({
             codePath,
             args: asArgs({ ...this._.config, ...extraParams }),
-            authorizers: [this._.name],
+            authorizers: Array.isArray(this._.name)
+              ? this._.name
+              : [this._.name],
           }),
         ),
       })
 
-  deploy =
+  _deploy =
     <ExtraParams>(
       codePath: string,
       asArgs: (_: Config & ExtraParams) => any[] = () => [],
@@ -121,7 +123,7 @@ abstract class AnyActor<Config, Actor extends AnyActor<Config, Actor>> {
           advanceContextWithDeployment({
             codePath,
             args: elseUndefined(asArgs({ ...this._.config, ...extraParams })),
-            deployer: this._.name,
+            deployer: Array.isArray(this._.name) ? this._.name[0] : this._.name,
           }),
         ),
       })

@@ -1,5 +1,5 @@
 import { AnyActor, newContext } from './actor'
-import { execute, numberDecoder } from './script'
+import { execute, numberDecoder, stringDecoder } from './script'
 
 const context = newContext()
 const noArg =
@@ -13,20 +13,20 @@ type ContractAccountConfig = {}
 
 class ContractAccount extends AnyActor<ContractAccountConfig, ContractAccount> {
   getThis = (_) => new ContractAccount(_)
-  deployNonFungibleToken = noArg(this.deploy('NonFungibleToken'))
-  deployMetadataViews = noArg(this.deploy('MetadataViews'))
+  deployNonFungibleToken = noArg(this._deploy('NonFungibleToken'))
+  deployMetadataViews = noArg(this._deploy('MetadataViews'))
 
-  deployMutableMetadata = noArg(this.deploy('MutableMetadata'))
-  deployMutableMetadataTemplate = noArg(this.deploy('MutableMetadataTemplate'))
-  deployMutableMetadataSet = noArg(this.deploy('MutableMetadataSet'))
+  deployMutableMetadata = noArg(this._deploy('MutableMetadata'))
+  deployMutableMetadataTemplate = noArg(this._deploy('MutableMetadataTemplate'))
+  deployMutableMetadataSet = noArg(this._deploy('MutableMetadataSet'))
   deployMutableMetadataSetManager = noArg(
-    this.deploy('MutableMetadataSetManager'),
+    this._deploy('MutableMetadataSetManager'),
   )
 
-  deployMetadataViewsManager = noArg(this.deploy('MetadataViewsManager'))
-  deployNiftoryNonFungibleToken = noArg(this.deploy('NiftoryNonFungibleToken'))
+  deployMetadataViewsManager = noArg(this._deploy('MetadataViewsManager'))
+  deployNiftoryNonFungibleToken = noArg(this._deploy('NiftoryNonFungibleToken'))
   deployNiftoryMetadataViewsResolvers = noArg(
-    this.deploy('NiftoryMetadataViewsResolvers'),
+    this._deploy('NiftoryMetadataViewsResolvers'),
   )
 }
 
@@ -39,7 +39,7 @@ type BrandManagerConfig = {}
 
 class BrandManager extends AnyActor<BrandManagerConfig, BrandManager> {
   getThis = (_) => new BrandManager(_)
-  deployNFTContract = noArg(this.deploy('NiftoryTemplate'))
+  deployNFTContract = noArg(this._deploy('NiftoryTemplate'))
 }
 
 const brandManager = (name: string): BrandManager =>
@@ -51,13 +51,13 @@ type NiftoryAdminConfig = {}
 
 class NiftoryAdmin extends AnyActor<NiftoryAdminConfig, NiftoryAdmin> {
   getThis = (_) => new NiftoryAdmin(_)
-  deployNFTRegistry = noArg(this.deploy('NiftoryNFTRegistry'))
-  initialize = this.send<{}>('niftory_admin/initialize')
-  register_brand = this.send<{ brand: string; contractAddress: string }>(
+  deployNFTRegistry = noArg(this._deploy('NiftoryNFTRegistry'))
+  initialize = this._send<{}>('niftory_admin/initialize')
+  register_brand = this._send<{ brand: string; contractAddress: string }>(
     'niftory_admin/register_brand',
     (_) => [_.contractAddress, _.brand],
   )
-  deregister_brand = this.send<{ brand: string }>(
+  deregister_brand = this._send<{ brand: string }>(
     'niftory_admin/deregister_brand',
     (_) => [_.brand],
   )
@@ -75,27 +75,27 @@ type SetManagerAdminConfig = {
 
 class SetManagerAdmin extends AnyActor<SetManagerAdminConfig, SetManagerAdmin> {
   getThis = (_) => new SetManagerAdmin(_)
-  initialize = this.send<{ name: string; description: string }>(
+  initialize = this._send<{ name: string; description: string }>(
     'set_manager_admin/initialize',
     (_) => [_.registryAddress, _.brand, _.name, _.description],
   )
-  set_name = this.send<{ name: string }>('set_manager_admin/set_name', (_) => [
+  set_name = this._send<{ name: string }>('set_manager_admin/set_name', (_) => [
     _.registryAddress,
     _.brand,
     _.name,
   ])
-  set_description = this.send<{ description: string }>(
+  set_description = this._send<{ description: string }>(
     'set_manager_admin/set_description',
     (_) => [_.registryAddress, _.brand, _.description],
   )
-  add_set = this.send<{
+  add_set = this._send<{
     initialMetadata: { [key: string]: string }
   }>('set_manager_admin/add_set', (_) => [
     _.registryAddress,
     _.brand,
     _.initialMetadata,
   ])
-  mint = this.send<{
+  mint = this._send<{
     setId: number
     templateId: number
     collectorAddress: string
@@ -106,7 +106,7 @@ class SetManagerAdmin extends AnyActor<SetManagerAdminConfig, SetManagerAdmin> {
     _.templateId,
     _.collectorAddress,
   ])
-  mint_bulk = this.send<{
+  mint_bulk = this._send<{
     setId: number
     templateId: number
     collectorAddress: string
@@ -140,7 +140,7 @@ class MetadataViewsManagerAdmin extends AnyActor<
   MetadataViewsManagerAdmin
 > {
   getThis = (_) => new MetadataViewsManagerAdmin(_)
-  set_royalty_resolver = this.send<{
+  set_royalty_resolver = this._send<{
     receiverAddress: string
     receiverPath: string
     cut: string
@@ -153,7 +153,11 @@ class MetadataViewsManagerAdmin extends AnyActor<
     _.cut,
     _.description,
   ])
-  set_ipfs_display_resolver = this.send<{
+  remove_royalty_resolver = this._send<{}>(
+    'metadataviews_manager_admin/royalties/remove',
+    (_) => [_.registryAddress, _.brand],
+  )
+  set_ipfs_display_resolver = this._send<{
     nameField: string
     defaultName: string
     descriptionField: string
@@ -172,21 +176,32 @@ class MetadataViewsManagerAdmin extends AnyActor<
     _.defaultImagePrefix,
     _.defaultImage,
   ])
-  set_collection_data_resolver = this.send<{}>(
-    'metadataviews_manager_admin/collection_data/set',
-    (_) => [_.registryAddress, _.brand],
-  )
-  remove_collection_data_resolver = this.send<{}>(
-    'metadataviews_manager_admin/collection_data/remove',
-    (_) => [_.registryAddress, _.brand],
-  )
-  remove_ipfs_display_resolver = this.send<{}>(
+  remove_ipfs_display_resolver = this._send<{}>(
     'metadataviews_manager_admin/ipfs_display/remove',
 
     (_) => [_.registryAddress, _.brand],
   )
-  remove_royalty_resolver = this.send<{}>(
-    'metadataviews_manager_admin/royalties/remove',
+  set_collection_data_resolver = this._send<{}>(
+    'metadataviews_manager_admin/collection_data/set',
+    (_) => [_.registryAddress, _.brand],
+  )
+  remove_collection_data_resolver = this._send<{}>(
+    'metadataviews_manager_admin/collection_data/remove',
+    (_) => [_.registryAddress, _.brand],
+  )
+  set_external_url_resolver = this._send<{
+    urlField: string
+    defaultPrefix: string
+    defaultUrl: string
+  }>('metadataviews_manager_admin/external_url/set', (_) => [
+    _.registryAddress,
+    _.brand,
+    _.urlField,
+    _.defaultPrefix,
+    _.defaultUrl,
+  ])
+  remove_external_url_resolver = this._send<{}>(
+    'metadataviews_manager_admin/external_url/remove',
     (_) => [_.registryAddress, _.brand],
   )
 }
@@ -212,7 +227,7 @@ type SetAdminConfig = {
 
 class SetAdmin extends AnyActor<SetAdminConfig, SetAdmin> {
   getThis = (_) => new SetAdmin(_)
-  add_template = this.send<{
+  add_template = this._send<{
     initialMetadata: { [key: string]: string }
     maxMint?: number
   }>('set_admin/add_template', (_) => [
@@ -224,7 +239,7 @@ class SetAdmin extends AnyActor<SetAdminConfig, SetAdmin> {
   ])
 
   lock = noArg(
-    this.send('set_admin/lock', (_) => [_.registryAddress, _.brand, _.setId]),
+    this._send('set_admin/lock', (_) => [_.registryAddress, _.brand, _.setId]),
   )
 }
 
@@ -248,7 +263,7 @@ type TemplateAdminConfig = {
 class TemplateAdmin extends AnyActor<TemplateAdminConfig, TemplateAdmin> {
   getThis = (_) => new TemplateAdmin(_)
   lock_template = noArg(
-    this.send('template_admin/lock', (_) => [
+    this._send('template_admin/lock', (_) => [
       _.registryAddress,
       _.brand,
       _.setId,
@@ -256,22 +271,22 @@ class TemplateAdmin extends AnyActor<TemplateAdminConfig, TemplateAdmin> {
     ]),
   )
   lock_metadata = noArg(
-    this.send('metadata_admin/lock', (_) => [
+    this._send('metadata_admin/lock', (_) => [
       _.registryAddress,
       _.brand,
       _.setId,
       _.templateId,
     ]),
   )
-  delete_field = this.send<{ key: string }>(
+  delete_field = this._send<{ key: string }>(
     'metadata_admin/delete_field',
     (_) => [_.registryAddress, _.brand, _.setId, _.templateId, _.key],
   )
-  set_field = this.send<{ key: string; value: string }>(
+  set_field = this._send<{ key: string; value: string }>(
     'metadata_admin/set_field',
     (_) => [_.registryAddress, _.brand, _.setId, _.templateId, _.key, _.value],
   )
-  replace_metadata = this.send<{ metadata: { [key: string]: string } }>(
+  replace_metadata = this._send<{ metadata: { [key: string]: string } }>(
     'metadata_admin/replace_metadata',
     (_) => [_.registryAddress, _.brand, _.setId, _.templateId, _.metadata],
   )
@@ -299,11 +314,11 @@ type CollectorConfig = {
 
 class Collector extends AnyActor<CollectorConfig, Collector> {
   getThis = (_) => new Collector(_)
-  initialize = this.send<{}>('collector/initialize', (_) => [
+  initialize = this._send<{}>('collector/initialize', (_) => [
     _.registryAddress,
     _.brand,
   ])
-  transfer = this.send<{
+  transfer = this._send<{
     recipientAddress: string
     id: number
   }>('collector/transfer', (_) => [
@@ -312,7 +327,7 @@ class Collector extends AnyActor<CollectorConfig, Collector> {
     _.recipientAddress,
     _.id,
   ])
-  transfer_bulk = this.send<{
+  transfer_bulk = this._send<{
     recipientAddress: string
     ids: number[]
   }>('collector/transfer_bulk', (_) => [
@@ -463,6 +478,12 @@ const collection = (
         publicPath: data.publicPath as string,
         providerPath: data.providerPath as string,
       }),
+    }),
+  external_url: (id: number) =>
+    execute({
+      codePath: 'collection/metadata_views/external_url',
+      args: [registryAddress, brand, collectionAddress, id],
+      decoder: stringDecoder,
     }),
 })
 

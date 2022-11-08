@@ -1,14 +1,9 @@
-import FungibleToken from "../../../contracts/FungibleToken.cdc"
 import MetadataViews from "../../../contracts/MetadataViews.cdc"
 
 import NiftoryNonFungibleToken from "../../../contracts/NiftoryNonFungibleToken.cdc"
 import NiftoryNFTRegistry from "../../../contracts/NiftoryNFTRegistry.cdc"
-import NiftoryMetadataViewsResolvers from "../../../contracts/NiftoryMetadataViewsResolvers.cdc"
 
-transaction(
-  registryAddress: Address,
-  brand: String,
-) {
+transaction(registryAddress: Address, brand: String) {
 
   let nftManager: &{NiftoryNonFungibleToken.ManagerPrivate}
 

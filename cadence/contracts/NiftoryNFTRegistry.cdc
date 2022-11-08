@@ -373,3 +373,4 @@ pub contract NiftoryNFTRegistry {
     self.METADATA_VIEWS_MANAGER_PATH_SUFFIX = "_metadata_views_manager"
   }
 }
+ 

@@ -108,7 +108,7 @@ pub contract NiftoryMetadataViewsResolvers {
     // does not exist in the NFT metadata.
     pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
       let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
-      let metadata = nft.metadata().get() as! &{String: String}
+      let metadata = nft.metadata().get() as! {String: String}
 
       let name = metadata[self.nameField] ?? self.defaultName
       let description = metadata[self.descriptionField]
@@ -313,10 +313,36 @@ pub contract NiftoryMetadataViewsResolvers {
     pub let defaultPrefix: String
     pub let defaultURL: String
 
+    /*
+    pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
+      let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
+      let metadata = nft.contract().metadata() as! {String: String}?
+      var uri = self.defaultURL
+
+      if metadata != nil {
+        if metadata!.containsKey(self.field) {
+          uri = metadata![self.field]!
+        }
+      }
+
+      let url = NiftoryMetadataViewsResolvers._prefixUri(
+        allowedPrefixes: 
+          NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+        default: self.defaultPrefix,
+        uri: uri
+      )
+
+      return MetadataViews.ExternalURL(url: url)
+    }
+    */
     //
     pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
       let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
-      let metadata = nft.contract().metadata() as! &{String: String}
+      var metadata: {String: String} = {}
+      var dynamicMetadata = nft.contract().metadata() as! {String: String}?
+      if dynamicMetadata != nil {
+        metadata = dynamicMetadata!
+      }
 
       let url = NiftoryMetadataViewsResolvers._prefixUri(
         allowedPrefixes: 
@@ -450,3 +476,4 @@ pub contract NiftoryMetadataViewsResolvers {
     return MetadataViews.Traits(traits: traits)
   }
 }
+ 

@@ -14,7 +14,7 @@ import {
   setAdmin,
   setManagerAdmin,
   templateAdmin,
-} from '../src/sdk'
+} from '../src/sdk2'
 import {
   assertScriptValue,
   checkContextAlive,
@@ -770,104 +770,143 @@ describe('basic-test', () => {
       .info.royalty(60)
       .then(checkScriptFailed)
 
-    //   t('Display resolver')
+    t('Display resolver')
 
-    //   // Display resolver should be null to start with
-    //   await q.nfts.x
-    //     .collection({ collectorAddress: addressBook.carol })
-    //     .info.display(60)
-    //     .then(checkScriptFailed)
+    // Display resolver should be null to start with
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.display(60)
+      .then(checkScriptFailed)
 
-    //   // Configure a display resolver
-    //   await bob.metadataViewsAdmin
-    //     .set_ipfs_display_resolver({
-    //       nameField: 'nam',
-    //       defaultName: 'defaultName',
-    //       descriptionField: 'description',
-    //       defaultDescription: 'defaultDescription',
-    //       imageField: 'ipfsImage',
-    //       defaultImagePrefix: 'ipfs://',
-    //       defaultImage: 'defaultIpfsImage',
-    //     })
-    //     .do(checkSuccessfulTransactions(1))
-    //     .wait()
-    //   await q.nfts.x
-    //     .collection({ collectorAddress: addressBook.carol })
-    //     .info.display(60)
-    //     .then(log)
-    //     .then(
-    //       checkScriptValue({
-    //         name: 'defaultTitle',
-    //         description: 'defaultDescription',
-    //         thumbnail: 'defaultIpfsImage',
-    //       }),
-    //     )
+    // Configure a display resolver
+    await bob.metadataViewsAdmin
+      .set_ipfs_display_resolver({
+        nameField: 'nam',
+        defaultName: 'defaultName',
+        descriptionField: 'description',
+        defaultDescription: 'defaultDescription',
+        imageField: 'ipfsImage',
+        defaultImagePrefix: 'ipfs://',
+        defaultImage: 'defaultIpfsImage',
+      })
+      .do(checkSuccessfulTransactions(1))
+      .wait()
 
-    //   t('Display resolver reset (there was a typo)')
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.display(60)
+      .then(
+        checkScriptValue({
+          name: 'defaultName',
+          description: 'defaultDescription',
+          thumbnail: 'ipfs://defaultIpfsImage',
+        }),
+      )
 
-    //   // There was a typo in the titleField. Let's fix it.
-    //   await bob.metadataViewsAdmin
-    //     .set_ipfs_display_resolver({
-    //       nameField: 'name',
-    //       defaultName: 'defaultName',
-    //       descriptionField: 'description',
-    //       defaultDescription: 'defaultDescription',
-    //       imageField: 'ipfsImage',
-    //       defaultImagePrefix: 'ipfs://',
-    //       defaultImage: 'defaultIpfsImage',
-    //     })
-    //     .do(checkSuccessfulTransactions(1))
-    //     .wait()
-    //   await q.nfts.x
-    //     .collection({ collectorAddress: addressBook.carol })
-    //     .info.display(60)
-    //     .then(
-    //       checkScriptValue({
-    //         name: 'Template 2',
-    //         description: 'defaultDescription',
-    //         thumbnail: 'defaultIpfsImage',
-    //       }),
-    //     )
+    t('Display resolver reset (there was a typo)')
 
-    //   t('Display resolver removed')
+    // There was a typo in the titleField. Let's fix it.
+    await bob.metadataViewsAdmin
+      .set_ipfs_display_resolver({
+        nameField: 'name',
+        defaultName: 'defaultName',
+        descriptionField: 'description',
+        defaultDescription: 'defaultDescription',
+        imageField: 'ipfsImage',
+        defaultImagePrefix: 'ipfs://',
+        defaultImage: 'defaultIpfsImage',
+      })
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.display(60)
+      .then(
+        checkScriptValue({
+          name: 'Template 2',
+          description: 'defaultDescription',
+          thumbnail: 'ipfs://defaultIpfsImage',
+        }),
+      )
 
-    //   // Remove the display resolver
-    //   await bob.metadataViewsAdmin
-    //     .remove_ipfs_display_resolver({})
-    //     .do(checkSuccessfulTransactions(1))
-    //     .wait()
-    //   await q.nfts.x
-    //     .collection({ collectorAddress: addressBook.carol })
-    //     .info.display(60)
-    //     .then(checkScriptFailed)
+    t('Display resolver removed')
 
-    //   // NFT Collection Data resolver should be null to start with
-    //   await q.nfts.x
-    //     .collection({ collectorAddress: addressBook.carol })
-    //     .info.collection_data(60)
-    //     .then(checkScriptFailed)
+    // Remove the display resolver
+    await bob.metadataViewsAdmin
+      .remove_ipfs_display_resolver({})
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.display(60)
+      .then(checkScriptFailed)
 
-    //   // Configure a collection data resolver
-    //   await bob.metadataViewsAdmin.set_collection_data_resolver({}).wait()
-    //   await q.nfts.x
-    //     .collection({ collectorAddress: addressBook.carol })
-    //     .info.collection_data(60)
-    //     .then(
-    //       checkScriptValue({
-    //         storagePath: '/storage/NiftoryTemplate_nft_collection',
-    //         publicPath: '/public/NiftoryTemplate_nft_collection',
-    //         providerPath: '/private/NiftoryTemplate_nft_collection',
-    //       }),
-    //     )
+    t('Collection data')
 
-    //   // Remove the collection data resolver
-    //   await bob.metadataViewsAdmin
-    //     .remove_collection_data_resolver({})
-    //     .do(checkSuccessfulTransactions(1))
-    //     .wait()
-    //   await q.nfts.x
-    //     .collection({ collectorAddress: addressBook.carol })
-    //     .info.collection_data(60)
-    //     .then(checkScriptFailed)
+    // NFT Collection Data resolver should be null to start with
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.collection_data(60)
+      .then(checkScriptFailed)
+
+    // Configure a collection data resolver
+    await bob.metadataViewsAdmin.set_collection_data_resolver({}).wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.collection_data(60)
+      .then(
+        checkScriptValue({
+          storagePath: '/storage/NiftoryTemplate_nft_collection',
+          publicPath: '/public/NiftoryTemplate_nft_collection',
+          providerPath: '/private/NiftoryTemplate_nft_collection',
+        }),
+      )
+
+    t('Collection data removed')
+
+    // Remove the collection data resolver
+    await bob.metadataViewsAdmin
+      .remove_collection_data_resolver({})
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.collection_data(60)
+      .then(checkScriptFailed)
+
+    t('External URL')
+
+    // External URL resolver should be null to start with
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.external_url(60)
+      .then(checkScriptFailed)
+
+    // Configure an external URL resolver
+    await bob.metadataViewsAdmin
+      .set_external_url_resolver({
+        urlField: 'url',
+        defaultPrefix: 'https://',
+        defaultUrl: 'defaultUrl.com',
+      })
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.external_url(60)
+      .then(checkScriptValue('https://defaultUrl.com'))
+
+    t("Change contract's external URL")
+
+    t('External URL removed')
+
+    // Remove the external URL resolver
+    await bob.metadataViewsAdmin
+      .remove_external_url_resolver({})
+      .do(checkSuccessfulTransactions(1))
+      .wait()
+    await q.nfts.x
+      .collection({ collectorAddress: addressBook.carol })
+      .info.external_url(60)
+      .then(checkScriptFailed)
   })
 })

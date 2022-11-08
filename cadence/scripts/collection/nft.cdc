@@ -49,3 +49,4 @@ pub fun main(
     views: nft.getViews()
   )
 }
+ 

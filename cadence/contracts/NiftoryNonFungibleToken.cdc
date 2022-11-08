@@ -45,10 +45,10 @@ pub contract NiftoryNonFungibleToken {
     // Unique ID of the NFT
     pub let id: UInt64
 
-    //
+    // ID of set this NFT belongs to
     pub let setId: Int
 
-    //
+    // ID of template within the set
     pub let templateId: Int
 
     // Serial number of the NFT. If multiple NFTs are meant to represent the
@@ -156,7 +156,7 @@ pub contract NiftoryNonFungibleToken {
     pub fun lockMetadataViewsManager()
 
     // Add the given resolver to the MetadataViewsResolver if not locked
-    pub fun setMetadataViewsResolver(_ resolver: {MetadataViewsManager.Resolver})
+    pub fun setMetadataViewsResolver(_ resolver: AnyStruct{MetadataViewsManager.Resolver})
 
     // Remove the given resolver from the MetadataViewsResolver if not locked
     pub fun removeMetadataViewsResolver(_ type: Type)
@@ -197,13 +197,13 @@ pub contract NiftoryNonFungibleToken {
 
     // MutableMetadataTemplate privileges
     //
-    //
+    // Lock the template from minting new NFTs
     pub fun lockTemplate(setId: Int, templateId: Int)
 
-    //
+    // Set maximum number of NFTs that can be minted from this template
     pub fun setTemplateMaxMint(setId: Int, templateId: Int, max: UInt64)
 
-    //
+    // Construct an NFT from the given set and template IDs
     pub fun mint(setId: Int, templateId: Int): @NonFungibleToken.NFT
     
     // Same as mint from above, but an optimized version to do bulk mints.
@@ -217,13 +217,13 @@ pub contract NiftoryNonFungibleToken {
 
     // MutableMetadata privileges
     //
-    //
+    // Lock the metadata for a given template
     pub fun lockNFTMetadata(setId: Int, templateId: Int)
 
-    //
+    // Get a mutable reference to the metadata for a given template
     pub fun modifyNFTMetadata(setId: Int, templateId: Int): auth &AnyStruct
     
-    //
+    // Replace the metadata for a given template
     pub fun replaceNFTMetadata(setId: Int, templateId: Int, new: AnyStruct)
   }
 }

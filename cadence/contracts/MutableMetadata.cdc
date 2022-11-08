@@ -20,7 +20,7 @@ pub contract MutableMetadata {
 
   pub resource interface Public {
 
-    // Is this metadata locked for modification? 
+    // Is this metadata locked for modification?
     pub fun locked(): Bool
 
     // Get a copy of the underlying metadata
@@ -51,7 +51,7 @@ pub contract MutableMetadata {
     access(self) var _locked: Bool
 
     // The actual underlying metadata
-    access(self) var _metadata: AnyStruct 
+    access(self) var _metadata: AnyStruct
 
     // ========================================================================
     // Public
@@ -62,7 +62,7 @@ pub contract MutableMetadata {
     }
 
     pub fun get(): AnyStruct {
-      // It's important that a copy returned and not a reference.
+      // It's important that a copy is returned and not a reference.
       return self._metadata
     }
 
@@ -73,7 +73,7 @@ pub contract MutableMetadata {
     pub fun lock() {
       self._locked = true
     }
-    
+
     pub fun getMutable(): auth &AnyStruct {
       pre {
         !self._locked : "Metadata is locked"

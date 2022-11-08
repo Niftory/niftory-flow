@@ -9,10 +9,10 @@ transaction(
   registryAddress: Address,
   brand: String,
   // Royalties
-  receiverAddress: Address,
-  receiverPath: String,
-  cut: UFix64,
-  description: String,
+  royaltyReceiverAddress: Address?,
+  royaltyReceiverPath: String?,
+  royaltyCut: UFix64?,
+  royaltyDescription: String?,
   // Collection Data (there's nothing)
   // Display
   nftNameField: String,
@@ -60,16 +60,20 @@ transaction(
   execute {
 
     // Royalties
-    let receiverPublicPath = PublicPath(identifier: receiverPath)!
-    let receiver = getAccount(receiverAddress)
-      .getCapability<&AnyResource{FungibleToken.Receiver}>(receiverPublicPath)
-    let royalty = MetadataViews.Royalty(
-        receiver: receiver,
-        cut: cut,
-        description: description
-    )
+    let royalties: [MetadataViews.Royalty] = []
+    if royaltyReceiverPath == nil {
+      let receiverPublicPath = PublicPath(identifier: royaltyReceiverPath!)!
+      let receiver = getAccount(royaltyReceiverAddress!)
+        .getCapability<&AnyResource{FungibleToken.Receiver}>(receiverPublicPath)
+      let royalty = MetadataViews.Royalty(
+          receiver: receiver,
+          cut: royaltyCut!,
+          description: royaltyDescription!
+      )
+      royalties.append(royalty)
+    }
     let royaltiesResolver = NiftoryMetadataViewsResolvers.RoyaltiesResolver(
-      royalties: MetadataViews.Royalties([royalty])
+      royalties: MetadataViews.Royalties(royalties)
     )
     self.nftManager.setMetadataViewsResolver(royaltiesResolver)
 

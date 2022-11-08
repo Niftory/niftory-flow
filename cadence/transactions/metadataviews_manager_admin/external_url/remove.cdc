@@ -16,7 +16,7 @@ transaction(registryAddress: Address, brand: String) {
   }
 
   execute {
-    let type = Type<MetadataViews.NFTCollectionData>()
+    let type = Type<MetadataViews.ExternalURL>()
     self.nftManager.removeMetadataViewsResolver(type)
   }
 }
