@@ -34,6 +34,8 @@ const MAX_UINT_64 = BigInt('18446744073709551615')
 // These tests can take a _long_ time
 jest.setTimeout(1000000)
 
+const sansPrefix = (address: string): string => address.replace(/^0x/, '')
+
 describe('basic-test', () => {
   beforeAll(async () => {
     // Basic emulator params
@@ -189,6 +191,9 @@ describe('basic-test', () => {
       .custom_buy({
         merchantAccountAddress: addresses.brandAContract,
         registryAddress: addresses.niftory,
+        nftType: `A.${sansPrefix(
+          addresses.brandAContract,
+        )}.NiftoryTemplate.NFT`,
         brand: BRAND_A_NAME,
         setId: 0,
         templateId: 0,

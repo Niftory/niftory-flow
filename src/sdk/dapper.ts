@@ -13,6 +13,7 @@ class DapperTripleAuthorizer extends AnyActor<
     merchantAccountAddress: string
     registryAddress: string
     brand: string
+    nftType: string
     nftId?: number | undefined
     setId?: number | undefined
     templateId?: number | undefined
@@ -21,6 +22,7 @@ class DapperTripleAuthorizer extends AnyActor<
     _.merchantAccountAddress,
     _.registryAddress,
     _.brand,
+    _.nftType,
     _.nftId,
     _.setId,
     _.templateId,

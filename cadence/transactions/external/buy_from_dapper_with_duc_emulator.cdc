@@ -18,6 +18,7 @@ transaction(
   merchantAccountAddress: Address,
   registryAddress: Address,
   brand: String,
+  nftTypeStr: String,
   nftId: UInt64?,
   setId: Int?,
   templateId: Int?,
@@ -72,7 +73,7 @@ transaction(
     self.dapperStoragePath = /storage/dapperUtilityCoinVault
     self.dapperReceiverPath = /public/dapperUtilityCoinReceiver
     self.dapperAddress = Address(0x179b6b1cb6755e31)
-    self.nftType = Type<@NiftoryTemplate.NFT>()
+    self.nftType = CompositeType(nftTypeStr)!
     self.salePaymentVaultType = Type<@DapperUtilityCoin.Vault>()
 
     /////////////////
