@@ -28,13 +28,23 @@ transaction(
 
   prepare(acct: AuthAccount) {
 
-    if acct.borrow<&NFTCatalog.NFTCatalogProposalManager>(from: NFTCatalog.ProposalManagerStoragePath) == nil {
+    if acct.borrow<&NFTCatalog.NFTCatalogProposalManager>(
+      from: NFTCatalog.ProposalManagerStoragePath
+    ) == nil {
       let proposalManager <- NFTCatalog.createNFTCatalogProposalManager()
       acct.save(<-proposalManager, to: NFTCatalog.ProposalManagerStoragePath)
-      acct.link<&NFTCatalog.NFTCatalogProposalManager{NFTCatalog.NFTCatalogProposalManagerPublic}>(NFTCatalog.ProposalManagerPublicPath, target: NFTCatalog.ProposalManagerStoragePath)
+      acct.link<&NFTCatalog.NFTCatalogProposalManager{
+        NFTCatalog.NFTCatalogProposalManagerPublic
+      }>(
+        NFTCatalog.ProposalManagerPublicPath,
+        target: NFTCatalog.ProposalManagerStoragePath
+      )
     }
 
-    self.nftCatalogProposalResourceRef = acct.borrow<&NFTCatalog.NFTCatalogProposalManager>(from: NFTCatalog.ProposalManagerStoragePath)!
+    self.nftCatalogProposalResourceRef = acct
+      .borrow<&NFTCatalog.NFTCatalogProposalManager>(
+        from: NFTCatalog.ProposalManagerStoragePath
+      )!
   }
 
   execute {
@@ -42,14 +52,20 @@ transaction(
     if (privateLinkedTypeRestrictions.length == 0) {
       privateLinkedType = CompositeType(publicLinkedTypeIdentifier)
     } else {
-      privateLinkedType = RestrictedType(identifier : privateLinkedTypeIdentifier, restrictions: privateLinkedTypeRestrictions)
+      privateLinkedType = RestrictedType(
+        identifier : privateLinkedTypeIdentifier,
+        restrictions: privateLinkedTypeRestrictions
+      )
     }
 
     let collectionData = NFTCatalog.NFTCollectionData(
       storagePath: StoragePath(identifier: storagePathIdentifier)!,
       publicPath: PublicPath(identifier : publicPathIdentifier)!,
       privatePath: PrivatePath(identifier: privatePathIdentifier)!,
-      publicLinkedType : RestrictedType(identifier : publicLinkedTypeIdentifier, restrictions: publicLinkedTypeRestrictions)!,
+      publicLinkedType : RestrictedType(
+        identifier : publicLinkedTypeIdentifier,
+        restrictions: publicLinkedTypeRestrictions
+      )!,
       privateLinkedType : privateLinkedType!
     )
 
@@ -86,12 +102,19 @@ transaction(
       contractAddress: contractAddress,
       nftType: CompositeType(nftTypeIdentifer)!,
       collectionData: collectionData,
-      collectionDisplay : collectionDisplay
+      collectionDisplay: collectionDisplay
     )
 
-    self.nftCatalogProposalResourceRef.setCurrentProposalEntry(identifier : collectionIdentifier)
+    self
+      .nftCatalogProposalResourceRef
+      .setCurrentProposalEntry(identifier : collectionIdentifier)
 
-    NFTCatalog.proposeNFTMetadata(collectionIdentifier : collectionIdentifier, metadata : catalogData, message: message, proposer: self.nftCatalogProposalResourceRef.owner!.address)
+    NFTCatalog.proposeNFTMetadata(
+      collectionIdentifier: collectionIdentifier,
+      metadata: catalogData,
+      message: message,
+      proposer: self.nftCatalogProposalResourceRef.owner!.address
+    )
 
     self.nftCatalogProposalResourceRef.setCurrentProposalEntry(identifier : nil)
   }

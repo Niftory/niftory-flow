@@ -10,8 +10,6 @@ transaction(
 ) {
 
   prepare(acct: AuthAccount) {
-    let nftManager = NiftoryNFTRegistry
-      .getNFTManagerPublic(registryAddress, brand)
     let paths = NiftoryNFTRegistry
       .getCollectionPaths(registryAddress, brand)
     let collection = acct

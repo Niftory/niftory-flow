@@ -19,8 +19,9 @@ const createBaseContractDeployer = (
 
 const createExternalContractDeployer = (
   name: string,
-): ContractDeployer<'DapperUtilityCoin' | 'NFTCatalog' | 'NFTCatalogAdmin'> =>
-  new ContractDeployer({ name, context, config: {} })
+): ContractDeployer<
+  'DapperUtilityCoin' | 'FlowUtilityToken' | 'NFTCatalog' | 'NFTCatalogAdmin'
+> => new ContractDeployer({ name, context, config: {} })
 
 const createNiftoryContractDeployer = (
   name: string,

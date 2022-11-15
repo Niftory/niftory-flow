@@ -1,7 +1,7 @@
 /*
 NFTRegistry
 
-Niftory NFTs should ideally be functionally the same. This would allow 
+Niftory NFTs should ideally be functionally the same. This would allow
 other applications to refer to any Niftory NFT without having to know about
 the properties of any individual NFT project. For example, a developer should
 not be required to import code from a specific NFT project just to get the
@@ -10,10 +10,12 @@ path of where a collection should be found in a users account.
 To make this possible, this NFTRegistry associates a single String identifier
 to struct of metadata required for the type of agnostic access described above.
 This includes
+
 - Paths of NonFungibleToken.Collection
 - Paths of the NFT project's Manager
 - Paths of the MutableSetManager
 - Paths of the MetadataViewManager
+
 */
 
 import NonFungibleToken from "./NonFungibleToken.cdc"
@@ -47,9 +49,9 @@ pub contract NiftoryNFTRegistry {
 
   // Struct to co-locate Path related metadata for a stored resource
   pub struct Paths {
-    
+
     // Public path of capability
-    pub let public: PublicPath 
+    pub let public: PublicPath
 
     // Private path of capability
     pub let private: PrivatePath
@@ -57,7 +59,6 @@ pub contract NiftoryNFTRegistry {
     // Storage path of resource
     pub let storage: StoragePath
 
-    // Init
     init(
       public: PublicPath,
       private: PrivatePath,
@@ -77,7 +78,6 @@ pub contract NiftoryNFTRegistry {
     // Relevant paths of stored resource
     pub let paths: Paths
 
-    // Init
     init(account: Address, paths: Paths) {
       self.account = account
       self.paths = paths
@@ -101,7 +101,6 @@ pub contract NiftoryNFTRegistry {
     // MetadataViewsManager path metadata
     pub let metadataViewsManager: StoredResource
 
-    // Init
     init(
       contractAddress: Address,
       collectionPaths: Paths,
@@ -162,7 +161,7 @@ pub contract NiftoryNFTRegistry {
 
     pub fun infoFor(_ brand: String): Record {
       pre {
-        self._registry.containsKey(brand) : 
+        self._registry.containsKey(brand) :
           "NFT ".concat(brand).concat(" is not registered")
       }
       return self._registry[brand]!
@@ -182,7 +181,7 @@ pub contract NiftoryNFTRegistry {
 
     pub fun deregister(_ brand: String) {
       pre {
-        self._registry.containsKey(brand) : 
+        self._registry.containsKey(brand) :
           "NFT ".concat(brand).concat(" is not registered")
       }
       self._registry.remove(key: brand)
@@ -221,32 +220,52 @@ pub contract NiftoryNFTRegistry {
     )
   }
 
-  // Default way to construct a RegistryItem, using suggested contract suffixes
-  pub fun generateRecord(account: Address, project: String): Record {
-    let collectionPaths = self.generatePaths(
+  // Generate collection paths
+  pub fun generateCollectionPaths(project: String): Paths {
+    return self.generatePaths(
       prefix: project,
       suffix: self.NFT_COLLECTION_PATH_SUFFIX
     )
+  }
+
+  // Generate NFT manager paths
+  pub fun generateNFTManagerPaths(project: String): Paths {
+    return self.generatePaths(
+      prefix: project,
+      suffix: self.NFT_MANAGER_PATH_SUFFIX
+    )
+  }
+
+  // Generate MutableMetadataSetManager paths
+  pub fun generateSetManagerPaths(project: String): Paths {
+    return self.generatePaths(
+      prefix: project,
+      suffix: self.SET_MANAGER_PATH_SUFFIX
+    )
+  }
+
+  // Generate MetadataViewsManager paths
+  pub fun generateMetadataViewsManagerPaths(project: String): Paths {
+    return self.generatePaths(
+      prefix: project,
+      suffix: self.METADATA_VIEWS_MANAGER_PATH_SUFFIX
+    )
+  }
+
+  // Default way to construct a RegistryItem, using suggested contract suffixes
+  pub fun generateRecord(account: Address, project: String): Record {
+    let collectionPaths = self.generateCollectionPaths(project: project)
     let nftManager = StoredResource(
       account: account,
-      paths: self.generatePaths(
-        prefix: project,
-        suffix: self.NFT_MANAGER_PATH_SUFFIX
-      )
+      paths: self.generateNFTManagerPaths(project: project)
     )
     let setManager = StoredResource(
       account: account,
-      paths: self.generatePaths(
-        prefix: project,
-        suffix: self.SET_MANAGER_PATH_SUFFIX
-      )
+      paths: self.generateSetManagerPaths(project: project)
     )
     let metadataViewsManager = StoredResource(
       account: account,
-      paths: self.generatePaths(
-        prefix: project,
-        suffix: self.METADATA_VIEWS_MANAGER_PATH_SUFFIX
-      )
+      paths: self.generateMetadataViewsManagerPaths(project: project)
     )
     return Record(
       contractAddress: account,
@@ -257,6 +276,8 @@ pub contract NiftoryNFTRegistry {
     )
   }
 
+  // Nicely formatted error for a resource not found that's listed in the
+  // registry
   pub fun _notFoundError(
     _ registryAddress: Address,
     _ brand: String,
@@ -270,17 +291,19 @@ pub contract NiftoryNFTRegistry {
       .concat(".")
   }
 
+  // Get a registry record for a registry address and brand
   pub fun getRegistryRecord(
     _ registryAddress: Address,
     _ brand: String
   ): Record {
     let registry = getAccount(registryAddress)
       .getCapability<&{Public}>(self.PUBLIC_PATH)
-      .borrow() 
+      .borrow()
         ?? panic(self._notFoundError(registryAddress, brand, "Registry Record"))
     return registry.infoFor(brand)
   }
 
+  // Get the collection paths for a registry address and brand
   pub fun getCollectionPaths(
     _ registryAddress: Address,
     _ brand: String
@@ -289,17 +312,19 @@ pub contract NiftoryNFTRegistry {
       return record.collectionPaths
   }
 
-  pub fun getNFTManagerPublic(_ registryAddress: Address, _ brand: String): 
+  // Get the NFT Manager for a registry address and brand
+  pub fun getNFTManagerPublic(_ registryAddress: Address, _ brand: String):
     &{NiftoryNonFungibleToken.ManagerPublic} {
       let record = self.getRegistryRecord(registryAddress, brand)
       let manager = getAccount(record.nftManager.account)
         .getCapability<&{NiftoryNonFungibleToken.ManagerPublic}>(
           record.nftManager.paths.public
         )
-      return manager.borrow() 
+      return manager.borrow()
         ?? panic(self._notFoundError(registryAddress, brand, "NFT Manager"))
   }
 
+  // Get the MutableMetadataSetManager for a registry address and brand
   pub fun getSetManagerPublic(_ registryAddress: Address, _ brand: String):
     &MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public} {
       let record = self.getRegistryRecord(registryAddress, brand)
@@ -309,10 +334,11 @@ pub contract NiftoryNFTRegistry {
         >(
           record.setManager.paths.public
         )
-      return manager.borrow() 
+      return manager.borrow()
         ?? panic(self._notFoundError(registryAddress, brand, "MutableMetadataSetManager"))
   }
 
+  // Get the MetadataViewsManager for a registry address and brand
   pub fun getMetadataViewsManagerPublic(
     _ registryAddress: Address,
     _ brand: String
@@ -325,10 +351,11 @@ pub contract NiftoryNFTRegistry {
         >(
           record.metadataViewsManager.paths.public
         )
-      return manager.borrow() 
+      return manager.borrow()
         ?? panic(self._notFoundError(registryAddress, brand, "MetadataViewsManager"))
   }
 
+  // Get NFTCollectionData for a registry address and brand
   pub fun buildNFTCollectionData(
     _ registryAddress: Address,
     _ brand: String,
@@ -373,4 +400,3 @@ pub contract NiftoryNFTRegistry {
     self.METADATA_VIEWS_MANAGER_PATH_SUFFIX = "_metadata_views_manager"
   }
 }
- 

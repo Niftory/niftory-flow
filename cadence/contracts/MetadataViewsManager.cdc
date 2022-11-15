@@ -2,20 +2,20 @@
 MetadataViewsManager
 
 MetadataViews (please see that contract for more details) provides metadata
-standards for NFTs to implement so 3rd-party applications do not need to rely
-on the specific programmatic interfaces of a given NFT.
+standards for NFTs to implement so 3rd-party applications need not rely on the
+specific implementation of a given NFT.
 
 This contract provides a way to augment an NFT contract with a customizable
-MetadataViews interface so that admins of this manager may
-add or remove NFT Resolvers. These Resolvers take an AnyStruct (likely to
-be an interface of the NFT itself) and map that AnyStruct to one of the
-MetadataViews Standards.
+MetadataViews interface so that admins of this manager may add or remove NFT
+Resolvers. These Resolvers take an AnyStruct (likely to be an interface of the
+NFT itself) and map that AnyStruct to one of the MetadataViews Standards.
 
 For example, one may make a Display resolver and assume that the "AnyStruct"
 object can be downcasted into an interface that can resolve the name,
-description, and url of that NFT. The Display Resolver can assuming the NFT's
-underlying metadata is a {String: String} dictionary and the Display name is
-the same as nftmetadata['name']/
+description, and url of that NFT. For instance, the Resolver can assume the
+NFT's underlying metadata is a {String: String} dictionary and the Display name
+is the same as nftmetadata['name'].
+
 */
 
 import MetadataViews from "./MetadataViews.cdc"

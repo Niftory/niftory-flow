@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "bootstrap-emulator": "./scripts/bootstrap-emulator.sh",
+    "test": "jest -i"
   },
   "keywords": [],
   "author": "",

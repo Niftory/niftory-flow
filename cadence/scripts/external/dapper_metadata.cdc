@@ -28,6 +28,7 @@ pub fun main(
   registryAddress: Address,
   brand: String,
   nftId: UInt64?,
+  nftTypeRef: String,
   setId: Int?,
   templateId: Int?,
   price: UFix64,
@@ -35,7 +36,6 @@ pub fun main(
 ): PurchaseData {
 
   if nftId == nil && setId != nil && templateId != nil {
-
     // We have a set ID and template ID, so we're minting a new NFT
     let setManager = NiftoryNFTRegistry.getSetManagerPublic(
       registryAddress,

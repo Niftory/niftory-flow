@@ -1,4 +1,4 @@
-import { emulator, getAccountAddress, init } from 'flow-js-testing'
+import { emulator, init } from 'flow-js-testing'
 import * as path from 'path'
 import * as sdk from '../src/sdk'
 import {
@@ -57,32 +57,18 @@ describe('basic-test', () => {
     // Create accounts and get their addresses
     type AddressBook = { [key: string]: string }
     const addresses: AddressBook = {
-      baseContracts: await getAccountAddress(BASE_CONTRACTS),
-      dapper: await getAccountAddress(DAPPER),
-      niftoryLibraries: await getAccountAddress(NIFTORY_LIBRARIES),
-      niftory: await getAccountAddress(NIFTORY),
-      brandAContract: await getAccountAddress(BRAND_A_CONTRACT),
-      brandAStorage: await getAccountAddress(BRAND_A_STORAGE),
-      brandBContract: await getAccountAddress(BRAND_B_CONTRACT),
-      brandBStorage: await getAccountAddress(BRAND_B_STORAGE),
-      collectorA: await getAccountAddress(COLLECTOR_A),
-      collectorB: await getAccountAddress(COLLECTOR_B),
+      baseContracts: await initAccount(BASE_CONTRACTS, '100'),
+      dapper: await initAccount(DAPPER, '100'),
+      niftoryLibraries: await initAccount(NIFTORY_LIBRARIES, '100'),
+      niftory: await initAccount(NIFTORY, '100'),
+      brandAContract: await initAccount(BRAND_A_CONTRACT, '100'),
+      brandAStorage: await initAccount(BRAND_A_STORAGE, '100'),
+      brandBContract: await initAccount(BRAND_B_CONTRACT, '100'),
+      brandBStorage: await initAccount(BRAND_B_STORAGE, '100'),
+      collectorA: await initAccount(COLLECTOR_A, '100'),
+      collectorB: await initAccount(COLLECTOR_B, '100'),
     }
     console.log(addresses)
-
-    // Give everyone some flow
-    await Promise.all([
-      initAccount(BASE_CONTRACTS, '100'),
-      initAccount(DAPPER, '100'),
-      initAccount(NIFTORY_LIBRARIES, '100'),
-      initAccount(NIFTORY, '100'),
-      initAccount(BRAND_A_CONTRACT, '100'),
-      initAccount(BRAND_A_STORAGE, '100'),
-      initAccount(BRAND_B_CONTRACT, '100'),
-      initAccount(BRAND_B_STORAGE, '100'),
-      initAccount(COLLECTOR_A, '100'),
-      initAccount(COLLECTOR_B, '100'),
-    ])
 
     // Get all of our actors
     const baseContractDeployer = sdk.createBaseContractDeployer(BASE_CONTRACTS)

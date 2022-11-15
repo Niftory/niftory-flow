@@ -1,12 +1,38 @@
+/*
+NiftoryNonFungibleTokenProxy
+
+NiftoryNonFungibleToken broadly defines private and public capabilities for
+a Niftory NFT Manager. Providing access to those capabilities can be done in
+an endless number of ways. This contract provides a simple way to distribute
+full access to the NFT Manager capabilities for multiple Niftory NFT contracts.
+
+A registryAddress and brand can uniquely identify a Niftory NFT project, and so
+those are used as part of the index for the corresponding project's NFT Manager
+capability.
+
+*/
+
 import NiftoryNonFungibleToken from "./NiftoryNonFungibleToken.cdc"
 
 pub contract NiftoryNonFungibleTokenProxy {
 
+  // ========================================================================
+  // Constants
+  // ========================================================================
+
+  // Suggested paths where this proxy can be stored
   pub let STORAGE_PATH: StoragePath
   pub let PUBLIC_PATH: PublicPath
   pub let PRIVATE_PATH: PrivatePath
 
+  // ========================================================================
+  //  Proxy
+  // ========================================================================
+
   pub resource interface Public {
+
+    // Add a manager capability for the NFT project identified by the given
+    // registryAddress and brand
     pub fun add(
       registryAddress: Address,
       brand: String,
@@ -18,6 +44,9 @@ pub contract NiftoryNonFungibleTokenProxy {
   }
 
   pub resource interface Private {
+
+    // Replace the manager capability for the NFT project identified by the
+    // given registryAddress and brand
     pub fun replace(
       registryAddress: Address,
       brand: String,
@@ -27,6 +56,8 @@ pub contract NiftoryNonFungibleTokenProxy {
       }>
     )
 
+    // Get the manager capability for the NFT project identified by the given
+    // registryAddress and brand
     pub fun access(
       registryAddress: Address,
       brand: String,
@@ -38,7 +69,11 @@ pub contract NiftoryNonFungibleTokenProxy {
 
   pub resource Proxy: Public, Private {
 
-    // NFT contract address -> Manager capabilities
+    // ========================================================================
+    // Attributes
+    // ========================================================================
+
+    // (registryAddress, brand) -> Manager capabilities
     access(self) let _proxies: {
       Address: {
         String: Capability<&{
@@ -47,6 +82,10 @@ pub contract NiftoryNonFungibleTokenProxy {
         }>
       }
     }
+
+    // ========================================================================
+    // Public
+    // ========================================================================
 
     pub fun add(
       registryAddress: Address,
@@ -75,6 +114,10 @@ pub contract NiftoryNonFungibleTokenProxy {
       }
       caps[brand] = cap
     }
+
+    // ========================================================================
+    // Private
+    // ========================================================================
 
     pub fun replace(
       registryAddress: Address,
@@ -119,15 +162,25 @@ pub contract NiftoryNonFungibleTokenProxy {
       return self._proxies[registryAddress]![brand]!.borrow()!
     }
 
+    // ========================================================================
+    // init/destroy
+    // ========================================================================
+
     init() {
       self._proxies = {}
     }
   }
 
+  // ========================================================================
+  // Contract functions
+  // ========================================================================
+
+  // Create a proxy
   pub fun create(): @Proxy {
     return <-create Proxy()
   }
 
+  // Initialize contract params
   init() {
     self.STORAGE_PATH = /storage/niftory_nft_manager_proxy
     self.PUBLIC_PATH = /public/niftory_nft_manager_proxy

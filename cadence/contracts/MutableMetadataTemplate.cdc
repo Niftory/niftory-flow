@@ -1,25 +1,29 @@
 /*
 MutableMetadataTemplate
 
-We want to be able to 
-- associate multiple objects (resources or structs) with the same metadata. For 
-example, we might have a pack of serialized NFTs which all represent the same 
-metadata, but each with a different serial number. 
-- provide a mechanism for to assure collectors that more resources of
-the same metadata cannot be produced, guaranteeing scarcity
-- provide a public mechanism to allow "minting" of a declared resource without
-allowing other authorized functionality.
+We want to be able to:
 
-MutableMetadataTemplate provides these abilities. Creators may associate 
-a MutableMetadata.Metadata (please see that contract for more details) with a 
+- associate multiple objects (resources or structs) with the same metadata. For
+example, we might have a pack of serialized NFTs which all represent the same
+metadata, but each with a different serial number.
+
+- assure collectors that more resources of the same metadata cannot be produced,
+guaranteeing scarcity
+
+- allow "minting" of a declared resource without allowing other authorized
+functionality.
+
+MutableMetadataTemplate provides these abilities. Creators may associate
+a MutableMetadata.Metadata (please see that contract for more details) with a
 Template in order to specify an optional "maxMint" field to associate with
 a Template. Once maxMint for a Template has been reached, then no more
 resources with the same metadata may be created.
 
 This was primarily created to control mints for NonFungibleTokens, but this
-should work generically with any resource. That being said, this contract
-does not actually do minting of new NFTs. Whenever an NFT is minted, registerMint
-must be called alongside.
+should work generically with any resource. That being said, this contract does
+not actually do minting of new NFTs. Whenever an NFT is minted, registerMint
+must be called alongside and will fail if minting should not be allowed.
+
 */
 
 import MutableMetadata from "./MutableMetadata.cdc"
@@ -32,7 +36,7 @@ pub contract MutableMetadataTemplate {
 
   pub resource interface Public {
 
-    // Is this template locked for future minting? 
+    // Is this template locked for future minting?
     pub fun locked(): Bool
 
     // Max mint allowed for this metadata. Can be set to nil for unlimited
@@ -50,8 +54,8 @@ pub contract MutableMetadataTemplate {
     // Lock the metadata from any additional future minting.
     pub fun lock()
 
-    // Set the maximum mint of this template if not already set and if
-    // not locked
+    // Set the maximum mint of this template if not already set and if not
+    // locked
     pub fun setMaxMint(_ max: UInt64)
 
     // Private version of underyling MutableMetadata.Metadata
@@ -93,10 +97,10 @@ pub contract MutableMetadataTemplate {
     }
 
     pub fun metadata(): &MutableMetadata.Metadata{MutableMetadata.Public} {
-      return &self._metadata 
+      return &self._metadata
         as &MutableMetadata.Metadata{MutableMetadata.Public}
     }
-    
+
     pub fun minted(): UInt64 {
       return self._minted
     }
@@ -104,30 +108,35 @@ pub contract MutableMetadataTemplate {
     // ========================================================================
     // Private
     // ========================================================================
-    
+
     pub fun lock() {
       self._locked = true
     }
-    
+
     pub fun setMaxMint(_ max: UInt64) {
       pre {
-        self._maxMint == nil: "maxMint already set"
-        max < self._minted: "maxMint must be less than minted"
+        self._maxMint == nil:
+          "Max mint already set to ".concat(self._maxMint!.toString())
+        max < self._minted:
+          "Proposed max mint of "
+            .concat(max.toString())
+            .concat(" must be less than currently minted: ")
+            .concat(self._minted.toString())
         !self._locked : "Template is locked"
       }
       self._maxMint = max
     }
 
-    pub fun metadataMutable(): 
+    pub fun metadataMutable():
       &MutableMetadata.Metadata{MutableMetadata.Public, MutableMetadata.Private}
     {
-      return &self._metadata 
+      return &self._metadata
         as &MutableMetadata.Metadata{MutableMetadata.Public, MutableMetadata.Private}
     }
 
     pub fun registerMint() {
       pre {
-        self._maxMint == nil || self._minted < self._maxMint! :
+        self._maxMint == nil || self._minted < self._maxMint!:
           "Minting limit of "
             .concat(self._maxMint!.toString())
             .concat(" reached.")

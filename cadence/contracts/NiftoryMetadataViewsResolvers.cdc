@@ -1,14 +1,15 @@
 /*
 NiftoryMetadataViewsResolvers
 
-Below are implementations of resolvers that will be common amongst Niftory
-NFTs. However, NFTs do not have to be limited to these by any means. 
-Please see details about the actual Metadata themselves from the
-MetadataViews contract
+Below are implementations of resolvers that will be common amongst Niftory NFTs.
+However, NFTs do not have to be limited to these by any means. Please see
+details about the actual Metadata themselves from the MetadataViews contract
 
-Each resolver is accompanied by a function to create that resolver
-(because constructors of resources are not accessible outside of the
-contract defining the resource)
+In order to create a custom resolver, follow one of the examples below. The NFT
+contract will pass an AnyStruct when calling resolveView. The custom resolver
+will receive this AnyStruct and can cast it to whatever the NFT contract
+provided the AnyStruct as.
+
 */
 
 import MetadataViews from "./MetadataViews.cdc"
@@ -23,7 +24,7 @@ pub contract NiftoryMetadataViewsResolvers {
   // Constants
   // ========================================================================
 
-  //
+  // All URIs are expected to have one of these prefixes.
   pub fun DEFAULT_ALLOWED_URI_PREFIXES(): [String] {
     return [
       "https://",
@@ -49,12 +50,11 @@ pub contract NiftoryMetadataViewsResolvers {
       return self.royalties
     }
 
-    // Init
     init(royalties: MetadataViews.Royalties) {
       self.type = Type<MetadataViews.Royalties>()
       self.royalties = royalties
     }
-  } 
+  }
 
   // ========================================================================
   // NFTCollectionData
@@ -64,7 +64,7 @@ pub contract NiftoryMetadataViewsResolvers {
 
     // NFTCollectionData
     pub let type: Type
-    
+
     // All Niftory NFTs should have an NFTPublic interface, which points to
     // its contracts NFTCollectionData info
     pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
@@ -72,11 +72,10 @@ pub contract NiftoryMetadataViewsResolvers {
       return nft.contract().getNFTCollectionData()
     }
 
-    // Init
     init() {
       self.type = Type<MetadataViews.NFTCollectionData>()
     }
-  } 
+  }
 
   // ========================================================================
   // Display
@@ -87,15 +86,15 @@ pub contract NiftoryMetadataViewsResolvers {
     // Display
     pub let type: Type
 
-    // Name 
+    // name
     pub let nameField: String
     pub let defaultName: String
 
-    // Description
+    // description
     pub let descriptionField: String
     pub let defaultDescription: String
 
-    // Image
+    // image
     pub let imageField: String
     pub let defaultImagePrefix: String
     pub let defaultImage: String
@@ -107,14 +106,20 @@ pub contract NiftoryMetadataViewsResolvers {
     // based on the provided field keys, or use a default value if that key
     // does not exist in the NFT metadata.
     pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
-      let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
-      let metadata = nft.metadata().get() as! {String: String}
+      let metadata = NiftoryMetadataViewsResolvers._extractMetadata(
+        nftRef: nftRef
+      )
 
+      // name
       let name = metadata[self.nameField] ?? self.defaultName
+
+      // description
       let description = metadata[self.descriptionField]
         ?? self.defaultDescription
+
+      // image
       let url = NiftoryMetadataViewsResolvers._prefixUri(
-        allowedPrefixes: 
+        allowedPrefixes:
           NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
         default: self.defaultImagePrefix,
         uri: metadata[self.imageField] ?? self.defaultImage
@@ -127,7 +132,6 @@ pub contract NiftoryMetadataViewsResolvers {
       )
     }
 
-    // Init
     init(
       nameField: String,
       defaultName: String,
@@ -148,6 +152,86 @@ pub contract NiftoryMetadataViewsResolvers {
     }
   }
 
+  // IPFS URLs used for displays will be converted to URLs using IPFS gateways
+  pub struct DisplayResolverWithIpfsGateway: MetadataViewsManager.Resolver {
+
+    // Display
+    pub let type: Type
+
+    // name
+    pub let nameField: String
+    pub let defaultName: String
+
+    // description
+    pub let descriptionField: String
+    pub let defaultDescription: String
+
+    // image
+    pub let imageField: String
+    pub let defaultImagePrefix: String
+    pub let defaultImage: String
+
+    // ipfs gateway
+    pub let ipfsGateway: String
+
+    // Niftory NFTs are assumed to have metadata implemented as a
+    // {String: String} map. In order to create a Display, we need to know
+    // the Display's name, description, and URI pointing to the Display media
+    // image. In this case, the resolver will try to fill those fields in
+    // based on the provided field keys, or use a default value if that key
+    // does not exist in the NFT metadata.
+    pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
+      let metadata = NiftoryMetadataViewsResolvers._extractMetadata(
+        nftRef: nftRef
+      )
+
+      // name
+      let name = metadata[self.nameField] ?? self.defaultName
+
+      // description
+      let description = metadata[self.descriptionField]
+        ?? self.defaultDescription
+
+      // image
+      let url = NiftoryMetadataViewsResolvers._useIpfsGateway(
+        ipfsGateway: self.ipfsGateway,
+        uri: NiftoryMetadataViewsResolvers._prefixUri(
+          allowedPrefixes:
+            NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+          default: self.defaultImagePrefix,
+          uri: metadata[self.imageField] ?? self.defaultImage
+        )
+      )
+
+      return MetadataViews.Display(
+        name: name,
+        description: description,
+        thumbnail: MetadataViews.HTTPFile(url: url)
+      )
+    }
+
+    init(
+      nameField: String,
+      defaultName: String,
+      descriptionField: String,
+      defaultDescription: String,
+      imageField: String,
+      defaultImagePrefix: String,
+      defaultImage: String,
+      ipfsGateway: String
+    ) {
+      self.type = Type<MetadataViews.Display>()
+      self.nameField = nameField
+      self.defaultName = defaultName
+      self.descriptionField = descriptionField
+      self.defaultDescription = defaultDescription
+      self.imageField = imageField
+      self.defaultImagePrefix = defaultImagePrefix
+      self.defaultImage = defaultImage
+      self.ipfsGateway = ipfsGateway
+    }
+  }
+
   // ========================================================================
   // NFTCollectionDisplay
   // ========================================================================
@@ -157,34 +241,34 @@ pub contract NiftoryMetadataViewsResolvers {
     // NFTCollectionDisplay
     pub let type: Type
 
-    // Name
+    // name
     pub let nameField: String
     pub let defaultName: String
 
-    // Description
+    // description
     pub let descriptionField: String
     pub let defaultDescription: String
 
-    // ExternalURL
+    // external URL
     pub let externalUrlField: String
     pub let defaultExternalURLPrefix: String
     pub let defaultExternalURL: String
 
-    // Square Image
+    // square image
     pub let squareImageField: String
     pub let defaultSquareImagePrefix: String
     pub let defaultSquareImage: String
     pub let squareImageMediaTypeField: String
     pub let defaultSquareImageMediaType: String
 
-    // Banner Image
+    // banner image
     pub let bannerImageField: String
     pub let defaultBannerImagePrefix: String
     pub let defaultBannerImage: String
     pub let bannerImageMediaTypeField: String
     pub let defaultBannerImageMediaType: String
 
-    // Socials
+    // socials
     pub let socialsFields: [String]
 
     // Niftory NFTs are assumed to have metadata implemented as a
@@ -194,25 +278,30 @@ pub contract NiftoryMetadataViewsResolvers {
     // based on the provided field keys, or use a default value if that key
     // does not exist in the NFT metadata.
     pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
-      let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
-      let metadata = nft.contract().metadata() as! {String: String}
+      let metadata = NiftoryMetadataViewsResolvers._extractMetadata(
+        nftRef: nftRef
+      )
 
+      // name
       let name = metadata[self.nameField] ?? self.defaultName
 
+      // description
       let description = metadata[self.descriptionField]
         ?? self.defaultDescription
 
+      // external URL
       let externalURL = MetadataViews.ExternalURL(url:
         NiftoryMetadataViewsResolvers._prefixUri(
-          allowedPrefixes: 
+          allowedPrefixes:
             NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
           default: self.defaultExternalURLPrefix,
           uri: metadata[self.externalUrlField] ?? self.defaultExternalURL
         )
       )
 
+      // square image
       let squareImageURL = NiftoryMetadataViewsResolvers._prefixUri(
-        allowedPrefixes: 
+        allowedPrefixes:
           NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
         default: self.defaultSquareImagePrefix,
         uri: metadata[self.squareImageField] ?? self.defaultSquareImage
@@ -226,8 +315,9 @@ pub contract NiftoryMetadataViewsResolvers {
         mediaType: squareImageMediaType
       )
 
+      // banner image
       let bannerImageURL = NiftoryMetadataViewsResolvers._prefixUri(
-        allowedPrefixes: 
+        allowedPrefixes:
           NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
         default: self.defaultBannerImagePrefix,
         uri: metadata[self.bannerImageField] ?? self.defaultBannerImage
@@ -241,6 +331,7 @@ pub contract NiftoryMetadataViewsResolvers {
         mediaType: bannerImageMediaType
       )
 
+      // socials
       let socials = NiftoryMetadataViewsResolvers._parseUrls(
         metadata: metadata,
         socialsFields: self.socialsFields
@@ -256,7 +347,6 @@ pub contract NiftoryMetadataViewsResolvers {
       )
     }
 
-    // Init
     init(
       nameField: String,
       defaultName: String,
@@ -299,6 +389,173 @@ pub contract NiftoryMetadataViewsResolvers {
     }
   }
 
+  // IPFS URLs used for displays will be converted to URLs using IPFS gateways
+  pub struct NFTCollectionDisplayResolverWithIpfsGateway:
+    MetadataViewsManager.Resolver
+  {
+
+    // NFTCollectionDisplay
+    pub let type: Type
+
+    // name
+    pub let nameField: String
+    pub let defaultName: String
+
+    // description
+    pub let descriptionField: String
+    pub let defaultDescription: String
+
+    // external URL
+    pub let externalUrlField: String
+    pub let defaultExternalURLPrefix: String
+    pub let defaultExternalURL: String
+
+    // square image
+    pub let squareImageField: String
+    pub let defaultSquareImagePrefix: String
+    pub let defaultSquareImage: String
+    pub let squareImageMediaTypeField: String
+    pub let defaultSquareImageMediaType: String
+
+    // banner image
+    pub let bannerImageField: String
+    pub let defaultBannerImagePrefix: String
+    pub let defaultBannerImage: String
+    pub let bannerImageMediaTypeField: String
+    pub let defaultBannerImageMediaType: String
+
+    // socials
+    pub let socialsFields: [String]
+
+    // ipfs gateway
+    pub let ipfsGateway: String
+
+    // Niftory NFTs are assumed to have metadata implemented as a
+    // {String: String} map. In order to create a Display, we need to know
+    // the Display's title, description, and URI pointing to the Display media
+    // image. In this case, the resolver will try to fill those fields in
+    // based on the provided field keys, or use a default value if that key
+    // does not exist in the NFT metadata.
+    pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
+      let metadata = NiftoryMetadataViewsResolvers._extractMetadata(
+        nftRef: nftRef
+      )
+
+      // name
+      let name = metadata[self.nameField] ?? self.defaultName
+
+      // description
+      let description = metadata[self.descriptionField]
+        ?? self.defaultDescription
+
+      // external URL
+      let externalURL = MetadataViews.ExternalURL(url:
+        NiftoryMetadataViewsResolvers._prefixUri(
+          allowedPrefixes:
+            NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+          default: self.defaultExternalURLPrefix,
+          uri: metadata[self.externalUrlField] ?? self.defaultExternalURL
+        )
+      )
+
+      // square image
+      let squareImageURL = NiftoryMetadataViewsResolvers._useIpfsGateway(
+        ipfsGateway: self.ipfsGateway,
+        uri: NiftoryMetadataViewsResolvers._prefixUri(
+          allowedPrefixes:
+            NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+          default: self.defaultSquareImagePrefix,
+          uri: metadata[self.squareImageField] ?? self.defaultSquareImage
+        )
+      )
+      let squareImageMediaType = metadata[self.squareImageMediaTypeField]
+        ?? self.defaultSquareImageMediaType
+      let squareImage = MetadataViews.Media(
+        file: MetadataViews.HTTPFile(
+          url: squareImageURL
+        ),
+        mediaType: squareImageMediaType
+      )
+
+      // banner image
+      let bannerImageURL = NiftoryMetadataViewsResolvers._useIpfsGateway(
+        ipfsGateway: self.ipfsGateway,
+        uri: NiftoryMetadataViewsResolvers._prefixUri(
+          allowedPrefixes:
+            NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+          default: self.defaultBannerImagePrefix,
+          uri: metadata[self.bannerImageField] ?? self.defaultBannerImage
+        )
+      )
+      let bannerImageMediaType = metadata[self.bannerImageMediaTypeField]
+        ?? self.defaultBannerImageMediaType
+      let bannerImage = MetadataViews.Media(
+        file: MetadataViews.HTTPFile(
+          url: bannerImageURL
+        ),
+        mediaType: bannerImageMediaType
+      )
+
+      // socials
+      let socials = NiftoryMetadataViewsResolvers._parseUrls(
+        metadata: metadata,
+        socialsFields: self.socialsFields
+      )
+
+      return MetadataViews.NFTCollectionDisplay(
+        name: name,
+        description: description,
+        externalURL: externalURL,
+        squareImage: squareImage,
+        bannerImage: bannerImage,
+        socials: socials
+      )
+    }
+
+    init(
+      nameField: String,
+      defaultName: String,
+      descriptionField: String,
+      defaultDescription: String,
+      externalUrlField: String,
+      defaultExternalURLPrefix: String,
+      defaultExternalURL: String,
+      squareImageField: String,
+      defaultSquareImagePrefix: String,
+      defaultSquareImage: String,
+      squareImageMediaTypeField: String,
+      defaultSquareImageMediaType: String,
+      bannerImageField: String,
+      defaultBannerImagePrefix: String,
+      defaultBannerImage: String,
+      bannerImageMediaTypeField: String,
+      defaultBannerImageMediaType: String,
+      socialsFields: [String],
+      ipfsGateway: String
+    ) {
+      self.type = Type<MetadataViews.NFTCollectionDisplay>()
+      self.nameField = nameField
+      self.defaultName = defaultName
+      self.descriptionField = descriptionField
+      self.defaultDescription = defaultDescription
+      self.externalUrlField = externalUrlField
+      self.defaultExternalURLPrefix = defaultExternalURLPrefix
+      self.defaultExternalURL = defaultExternalURL
+      self.squareImageField = squareImageField
+      self.defaultSquareImagePrefix = defaultSquareImagePrefix
+      self.defaultSquareImage = defaultSquareImage
+      self.squareImageMediaTypeField = squareImageMediaTypeField
+      self.defaultSquareImageMediaType = defaultSquareImageMediaType
+      self.bannerImageField = bannerImageField
+      self.defaultBannerImagePrefix = defaultBannerImagePrefix
+      self.defaultBannerImage = defaultBannerImage
+      self.bannerImageMediaTypeField = bannerImageMediaTypeField
+      self.defaultBannerImageMediaType = defaultBannerImageMediaType
+      self.socialsFields = socialsFields
+      self.ipfsGateway = ipfsGateway
+    }
+  }
+
   // ========================================================================
   // ExternalURL
   // ========================================================================
@@ -308,44 +565,25 @@ pub contract NiftoryMetadataViewsResolvers {
     // ExternalURL
     pub let type: Type
 
-    // URL
+    // url
     pub let field: String
     pub let defaultPrefix: String
     pub let defaultURL: String
 
-    /*
+    // Niftory NFTs are assumed to have metadata implemented as a
+    // {String: String} map. In order to create an ExternalURL, we need to know
+    // the Display's name, description, and URI pointing to the Display media
+    // image. In this case, the resolver will try to fill those fields in
+    // based on the provided field keys, or use a default value if that key
+    // does not exist in the NFT metadata.
     pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
-      let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
-      let metadata = nft.contract().metadata() as! {String: String}?
-      var uri = self.defaultURL
-
-      if metadata != nil {
-        if metadata!.containsKey(self.field) {
-          uri = metadata![self.field]!
-        }
-      }
-
-      let url = NiftoryMetadataViewsResolvers._prefixUri(
-        allowedPrefixes: 
-          NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
-        default: self.defaultPrefix,
-        uri: uri
+      let metadata = NiftoryMetadataViewsResolvers._extractMetadata(
+        nftRef: nftRef
       )
 
-      return MetadataViews.ExternalURL(url: url)
-    }
-    */
-    //
-    pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
-      let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
-      var metadata: {String: String} = {}
-      var dynamicMetadata = nft.contract().metadata() as! {String: String}?
-      if dynamicMetadata != nil {
-        metadata = dynamicMetadata!
-      }
-
+      // url
       let url = NiftoryMetadataViewsResolvers._prefixUri(
-        allowedPrefixes: 
+        allowedPrefixes:
           NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
         default: self.defaultPrefix,
         uri: metadata[self.field] ?? self.defaultURL
@@ -354,7 +592,6 @@ pub contract NiftoryMetadataViewsResolvers {
       return MetadataViews.ExternalURL(url: url)
     }
 
-    // Init
     init(
       field: String,
       defaultPrefix: String,
@@ -385,13 +622,16 @@ pub contract NiftoryMetadataViewsResolvers {
     // Traits
     pub let type: Type
 
-    // URL
+    // trait accessors
     pub let accessors: [SimpleTraitAccessor]
 
-    //
+    // A very simple Traits implementation that assumes the NFT metadata is
+    // implemented as a {String: String} map. Along with a trait key, it's
+    // possible to provide a rarity key.
     pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
-      let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
-      let metadata = nft.metadata().get() as! {String: String}
+      let metadata = NiftoryMetadataViewsResolvers._extractMetadata(
+        nftRef: nftRef
+      )
 
       return NiftoryMetadataViewsResolvers._parseTraits(
         metadata: metadata,
@@ -399,7 +639,6 @@ pub contract NiftoryMetadataViewsResolvers {
       )
     }
 
-    // Init
     init(
       accessors: [SimpleTraitAccessor],
     ) {
@@ -412,13 +651,36 @@ pub contract NiftoryMetadataViewsResolvers {
   // Contract functions
   // ========================================================================
 
-  //
+  access(self) fun _extractMetadata(nftRef: AnyStruct): {String: String} {
+    let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
+    var metadata: {String: String} = {}
+
+    let contractMetadata = nft.contract().metadata() as! {String: String}?
+    if contractMetadata != nil {
+      metadata = contractMetadata!
+    }
+
+    let setMetadata = nft.set().metadata().get() as! {String: String}
+    for key in setMetadata.keys {
+      metadata[key] = setMetadata[key]!
+    }
+
+    let nftMetadata = nft.metadata().get() as! {String: String}
+    for key in nftMetadata.keys {
+      metadata[key] = nftMetadata[key]!
+    }
+
+    return metadata
+  }
+
+  // Check if a string begins with a substring
   access(self) fun _startsWith(string: String, substring: String): Bool {
     return substring.length <= string.length
       && string.slice(from: 0, upTo: substring.length) == substring
   }
 
-  //
+  // Prefix a uri with a default prefix if it does not start with any of the
+  // allowed prefixes
   access(self) fun _prefixUri(
     allowedPrefixes: [String],
     default: String,
@@ -432,7 +694,21 @@ pub contract NiftoryMetadataViewsResolvers {
     return default.concat(uri)
   }
 
-  //
+  // Use the provided IPFS gateway if the uri starts with the IPFS prefix
+  access(self) fun _useIpfsGateway(
+    ipfsGateway: String,
+    uri: String
+  ): String {
+    if self._startsWith(string: uri, substring: "ipfs://") {
+      return ipfsGateway.concat(uri.slice(from: 7, upTo: uri.length))
+    }
+    return uri
+  }
+
+  // socialsFields can contain metadata keys for URL based socials. This
+  // returns a dictionary of {String: MetadataViews.ExternalURL} where the
+  // key is the social field name and the value is the ExternalURL struct
+  // constructed from the corresponding metadata value
   access(self) fun _parseUrls(
     metadata: {String: String},
     socialsFields: [String],
@@ -446,7 +722,12 @@ pub contract NiftoryMetadataViewsResolvers {
     return socials
   }
 
-  //
+  // The full spec of a Trait can be viewed in MetadataViews. In this case,
+  // a "trait" is assumed to be a simple string field that describes the NFT.
+  // The "rarity" is optional and also another string field. Given these fields
+  // and a {String: String} metadata dictionary, this function will form proper
+  // Trait structs based on the values from the corresponding fields in the
+  // metadata
   access(self) fun _parseTraits(
     metadata: {String: String},
     accessors: [SimpleTraitAccessor],
@@ -466,8 +747,8 @@ pub contract NiftoryMetadataViewsResolvers {
           )
         }
         traits.append(MetadataViews.Trait(
-          trait: trait,
-          rarity: rarity,
+          name: traitField,
+          value: trait,
           displayType: nil,
           rarity: rarity,
         ))
@@ -476,4 +757,3 @@ pub contract NiftoryMetadataViewsResolvers {
     return MetadataViews.Traits(traits: traits)
   }
 }
- 

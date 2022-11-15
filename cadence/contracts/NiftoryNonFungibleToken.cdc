@@ -4,23 +4,28 @@ NiftoryNonFungibleToken
 Niftory is a platform to design, manage, and launch NFT experiments and
 experiences. This contract defines what those NFTs look like.
 
-In order to provide NFT brand admins maximum customizability, Niftory NFTs
-offer the following features
-- Mutatable metadata for NFTs via Niftory's MutableMetadata suite of contracts. 
+In order to provide NFT brand admins maximum customizability, Niftory NFTs offer
+the following features
+
+- Mutatable metadata for NFTs via Niftory's MutableMetadata suite of contracts.
   Admins can continue to modify NFTs even after they are minted, or they can
   decide to lock the metadata for a particular NFT or set of NFTs to provide
   immutability guarantees
-- Conformance to NFT metadata standards with customizable resolvers. The Flow 
+
+- Conformance to NFT metadata standards with customizable resolvers. The Flow
   team and community have provided standards for NFTs to implement so third
   party applications can access metadata for any NFT, regardless of how it was
-  implemented. Niftory NFTs use MetadataViewsmMnager so admins can customize
-  how NFTs are viewed by these applications, up until they decide to lock it.
+  implemented. Niftory NFTs use MetadataViewsmMnager so admins can customize how
+  NFTs are viewed by these applications, up until they decide to lock it.
+
 - Common interfaces for minting and information. This enables separately managed
   code to refer to Niftory NFTs agnostically from the actual Niftory NFT
-  implementation (e.g. No need to import an NFT contract directly, you just
-  need to know what path and which address the minting/info/etc. capabilities 
-  are located)
+  implementation (e.g. No need to import an NFT contract directly, you just need
+  to know what path and which address the minting/info/etc. capabilities are
+  located)
+
 - Common interface for collections, which allows bulk withdrawal/deposits
+
 */
 
 import NonFungibleToken from "./NonFungibleToken.cdc"
@@ -113,12 +118,10 @@ pub contract NiftoryNonFungibleToken {
   // ========================================================================
   // Manager interfaces
   // ========================================================================
-
   // A Niftory NFT Manager is responsible for providing interfaces into the NFT
   // contract itself. The two basic functions are to either provide information
   // about the contract or do minting (if authorized)
 
-  // Public
   pub resource interface ManagerPublic {
 
     // Get arbitrary metadata for this NFT contract, if implemented
@@ -128,19 +131,22 @@ pub contract NiftoryNonFungibleToken {
     // contract's NFTs are gettting their metadata from
     pub fun getSetManagerPublic():
         &MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public}
-    
+
     // For convenience and transparency, return the MetadataViewsManager this
     // contract's NFTs are gettting their metadata from
     pub fun getMetadataViewsManagerPublic():
         &MetadataViewsManager.Manager{MetadataViewsManager.Public}
-    
+
     // In order to expose collection features in an NFT agnostic way
     // (i.e. without having to import the actual NFT contract explicitly)
     pub fun getNFTCollectionData(): MetadataViews.NFTCollectionData
   }
 
-  // Private
   pub resource interface ManagerPrivate {
+
+    // ========================================================================
+    // Contract metadata
+    // ========================================================================
 
     // Set arbitrary metadata for this NFT contract, if implemented
     pub fun modifyContractMetadata(): auth &AnyStruct
@@ -148,10 +154,11 @@ pub contract NiftoryNonFungibleToken {
     // Set arbitrary metadata for this NFT contract, if implemented
     pub fun replaceContractMetadata(_ metadata: AnyStruct?)
 
-    ////////////////////////////////////////////////////////////////////////////
 
-    // MetadataViewsManager privileges
-    //
+    // ========================================================================
+    // Metadata Views Manager
+    // ========================================================================
+
     // Lock MetadataViewsResolver so that resolvers can be neither added nor removed
     pub fun lockMetadataViewsManager()
 
@@ -161,42 +168,43 @@ pub contract NiftoryNonFungibleToken {
     // Remove the given resolver from the MetadataViewsResolver if not locked
     pub fun removeMetadataViewsResolver(_ type: Type)
 
-    ////////////////////////////////////////////////////////////////////////////
+    // ========================================================================
+    // Set Manager
+    // ========================================================================
 
-    // MutableMetadataSetManager privileges
-    //
-    //
+    // Set the name of the set manager
     pub fun setMetadataManagerName(_ name: String)
 
-    //
+    // Set the description of the set manager
     pub fun setMetadataManagerDescription(_ description: String)
 
-    //
+    // Add a set to the set manager
     pub fun addSet(_ set: @MutableMetadataSet.Set)
 
-    ////////////////////////////////////////////////////////////////////////////
+    // ========================================================================
+    // Set
+    // ========================================================================
 
-    // MutableMetadataSet privileges
-    //
-    //
+    // Lock the set so new templates cannot be added
     pub fun lockSet(setId: Int)
 
-    //
+    // Lock the ability to modify the set metadata
     pub fun lockSetMetadata(setId: Int)
 
-    // 
+    // Retrieve a modifiable version of the underyling set metadata, only if the
+    // metadata has not been locked.
     pub fun modifySetMetadata(setId: Int): auth &AnyStruct
-    
-    //
+
+    // Replace the metadata for a set
     pub fun replaceSetMetadata(setId: Int, new: AnyStruct)
 
-    //
+    // Add a new template to set setId
     pub fun addTemplate(setId: Int, template: @MutableMetadataTemplate.Template)
 
-    ////////////////////////////////////////////////////////////////////////////
+    // ========================================================================
+    // Minting
+    // ========================================================================
 
-    // MutableMetadataTemplate privileges
-    //
     // Lock the template from minting new NFTs
     pub fun lockTemplate(setId: Int, templateId: Int)
 
@@ -205,7 +213,7 @@ pub contract NiftoryNonFungibleToken {
 
     // Construct an NFT from the given set and template IDs
     pub fun mint(setId: Int, templateId: Int): @NonFungibleToken.NFT
-    
+
     // Same as mint from above, but an optimized version to do bulk mints.
     pub fun mintBulk(
       setId: Int,
@@ -213,16 +221,16 @@ pub contract NiftoryNonFungibleToken {
       numToMint: UInt64,
     ): @[NonFungibleToken.NFT]
 
-    ////////////////////////////////////////////////////////////////////////////
+    // ========================================================================
+    // NFT metadata
+    // ========================================================================
 
-    // MutableMetadata privileges
-    //
     // Lock the metadata for a given template
     pub fun lockNFTMetadata(setId: Int, templateId: Int)
 
     // Get a mutable reference to the metadata for a given template
     pub fun modifyNFTMetadata(setId: Int, templateId: Int): auth &AnyStruct
-    
+
     // Replace the metadata for a given template
     pub fun replaceNFTMetadata(setId: Int, templateId: Int, new: AnyStruct)
   }

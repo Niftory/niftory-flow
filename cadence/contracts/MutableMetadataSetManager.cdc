@@ -9,33 +9,35 @@ NFT contract.
 
 A SetManager should have a name and description and provides a way to add
 additional Sets and access those Sets for mutation, if allowed by the Set.
+
 */
 
 import MutableMetadataSet from "./MutableMetadataSet.cdc"
 
 pub contract MutableMetadataSetManager {
 
-  // ===========================================================================
+  // ==========================================================================
   // Manager
-  // ===========================================================================
+  // ==========================================================================
 
   pub resource interface Public {
 
     // Name of this manager
     pub fun name(): String
 
-    // Description this manager
+    // Description of this manager
     pub fun description(): String
 
     // Number of sets in this manager
     pub fun numSets(): Int
 
     // Get the public version of a particular set
-    pub fun getSet(_ id: Int): &MutableMetadataSet.Set{MutableMetadataSet.Public}
+    pub fun getSet(_ id: Int):
+      &MutableMetadataSet.Set{MutableMetadataSet.Public}
   }
 
   pub resource interface Private {
-    
+
     // Set the name of the manager
     pub fun setName(_ name: String)
 
@@ -44,7 +46,9 @@ pub contract MutableMetadataSetManager {
 
     // Get the private version of a particular set
     pub fun getSetMutable(_ id: Int):
-      &MutableMetadataSet.Set{MutableMetadataSet.Public, MutableMetadataSet.Private}
+      &MutableMetadataSet.Set{MutableMetadataSet.Public,
+        MutableMetadataSet.Private
+      }
 
     // Add a mutable set to the set manager.
     pub fun addSet(_ set: @MutableMetadataSet.Set)
@@ -60,7 +64,7 @@ pub contract MutableMetadataSetManager {
     access(self) var _name: String
 
     // Description of this manager
-    access(self) var _description: String  
+    access(self) var _description: String
 
     // Sets owned by this manager
     access(self) var _mutableSets: @[MutableMetadataSet.Set]
@@ -81,7 +85,9 @@ pub contract MutableMetadataSetManager {
       return self._mutableSets.length
     }
 
-    pub fun getSet(_ id: Int): &MutableMetadataSet.Set{MutableMetadataSet.Public} {
+    pub fun getSet(_ id: Int):
+      &MutableMetadataSet.Set{MutableMetadataSet.Public}
+    {
       pre {
         id >= 0 && id < self._mutableSets.length :
           id
@@ -89,7 +95,7 @@ pub contract MutableMetadataSetManager {
             .concat(" is not a valid set ID. Number of sets is ")
             .concat(self._mutableSets.length.toString())
       }
-      return &self._mutableSets[id] 
+      return &self._mutableSets[id]
         as &MutableMetadataSet.Set{MutableMetadataSet.Public}
     }
 
@@ -105,8 +111,11 @@ pub contract MutableMetadataSetManager {
       self._description = description
     }
 
-    pub fun getSetMutable(_ id: Int): 
-      &MutableMetadataSet.Set{MutableMetadataSet.Public, MutableMetadataSet.Private} {
+    pub fun getSetMutable(_ id: Int):
+      &MutableMetadataSet.Set{MutableMetadataSet.Public,
+        MutableMetadataSet.Private
+      }
+    {
       pre {
         id >= 0 && id < self._mutableSets.length :
           id
@@ -114,12 +123,16 @@ pub contract MutableMetadataSetManager {
             .concat(" is not a valid set ID. Number of sets is ")
             .concat(self._mutableSets.length.toString())
       }
-      return &self._mutableSets[id] 
-        as &MutableMetadataSet.Set{MutableMetadataSet.Public, MutableMetadataSet.Private}
+      return &self._mutableSets[id]
+        as &MutableMetadataSet.Set{MutableMetadataSet.Public,
+          MutableMetadataSet.Private
+        }
     }
 
     pub fun addSet(_ set: @MutableMetadataSet.Set) {
+      let id = self._mutableSets.length
       self._mutableSets.append(<- set)
+      emit SetAdded(id: id)
     }
 
     // ========================================================================
@@ -145,4 +158,11 @@ pub contract MutableMetadataSetManager {
   pub fun create(name: String, description: String): @Manager {
     return <-create Manager(name: name, description: description)
   }
+
+  // ==========================================================================
+  // Ignore
+  // ==========================================================================
+
+  // Not used - exists to conform to contract updatability requirements
+  pub event SetAdded(id: Int)
 }

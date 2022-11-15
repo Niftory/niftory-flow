@@ -1,15 +1,16 @@
 /*
 MutableMetadata
 
-This contract serves as a container for metadata that can be modified after
-it has been created. Any underyling struct can be used as the metadata, and
-any observer should be able to inpsect the metadata. For example, a common
-scenario would be to used a {String: String} map as the metadata.
+This contract serves as a container for metadata that can be modified after it
+has been created. Any underyling struct can be used as the metadata, and any
+observer should be able to inpsect the metadata. A common strategy would be to
+use a {String: String} map as the metadata.
 
-Administrators with access to this contract's private capabilities will be
+Administrators with access to this resource's private capabilities will be
 allowed to modify the metadata as they wish until they decide to lock it. After
 it has been locked, observers can rest asssured knowing the metadata for a
 particular item (most likely an NFT) can no longer be modified.
+
 */
 
 pub contract MutableMetadata {
