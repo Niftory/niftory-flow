@@ -157,7 +157,8 @@
     "NiftoryNFTRegistry": "./cadence/contracts/NiftoryNFTRegistry.cdc",
     "NiftoryMetadataViewsResolvers": "./cadence/contracts/NiftoryMetadataViewsResolvers.cdc",
     "NiftoryNonFungibleTokenProxy": "./cadence/contracts/NiftoryNonFungibleTokenProxy.cdc",
-    "NiftoryTemplate": "./cadence/contracts/NiftoryTemplate.cdc"
+    "NiftoryTemplate": "./cadence/contracts/NiftoryTemplate.cdc",
+    "NiftoryNFTDeployer": "./cadence/contracts/NiftoryNFTDeployer.cdc"
   },
   "deployments": {
     "emulator": {
@@ -175,7 +176,8 @@
         "NiftoryNonFungibleToken",
         "NiftoryNFTRegistry",
         "NiftoryMetadataViewsResolvers",
-        "NiftoryNonFungibleTokenProxy"
+        "NiftoryNonFungibleTokenProxy",
+        "NiftoryNFTDeployer"
       ]
     }
   }

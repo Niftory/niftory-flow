@@ -1,15 +1,19 @@
 {
   "name": "niftory-flow",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.0.0",
   "scripts": {
+    "test": "jest",
     "bootstrap-emulator": "./scripts/bootstrap-emulator.sh",
-    "test": "jest -i"
+    "generate-deployer": "ts-node ./scripts/generate-deployer.ts",
+    "update-contracts:testnet": "echo \"TODO\"",
+    "update-contracts:mainnet": "echo \"TODO\"",
+    "ac:testnet": "echo \"TODO\"",
+    "ac:mainnet": "echo \"TODO\"",
+    "sc:testnet": "echo \"TODO\"",
+    "sc:mainnet": "echo \"TODO\"",
+    "tx:testnet": "echo \"TODO\"",
+    "tx:mainnet": "echo \"TODO\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@babel/core": "^7.18.2",
     "@babel/preset-env": "^7.18.2",
@@ -38,11 +42,5 @@
     "ts-jest": "^28.0.3",
     "ts-node": "^10.8.0",
     "typescript": "^4.7.2"
-  },
-  "dependencies": {
-    "@onflow/fcl": "^1.3.2",
-    "@onflow/transport-grpc": "^1.1.4",
-    "elliptic": "^6.5.4",
-    "sha3": "^2.1.4"
   }
 }

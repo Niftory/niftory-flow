@@ -1,0 +1,50 @@
+{
+  "accounts": {
+    "testnet-niftory-contracts": {
+      "address": "04f74f0252479aed",
+      "key": {}
+    },
+    "testnet-niftory-registry": {
+      "address": "6085ae87e78e1433",
+      "key": {}
+    },
+    "mainnet-niftory-contracts": {
+      "address": "7ec1f607f0872a9e",
+      "key": {}
+    },
+    "mainnet-niftory-registry": {
+      "address": "32d62d5c43ad1038",
+      "key": {}
+    }
+  },
+  "deployments": {
+    "testnet": {
+      "testnet-niftory-contracts": [
+        "MetadataViewsManager",
+        "MutableMetadata",
+        "MutableMetadataTemplate",
+        "MutableMetadataSet",
+        "MutableMetadataSetManager",
+        "NiftoryNonFungibleToken",
+        "NiftoryNFTRegistry",
+        "NiftoryMetadataViewsResolvers",
+        "NiftoryNonFungibleTokenProxy",
+        "NiftoryNFTDeployer"
+      ]
+    },
+    "mainnet": {
+      "mainnet-niftory-contracts": [
+        "MetadataViewsManager",
+        "MutableMetadata",
+        "MutableMetadataTemplate",
+        "MutableMetadataSet",
+        "MutableMetadataSetManager",
+        "NiftoryNonFungibleToken",
+        "NiftoryNFTRegistry",
+        "NiftoryMetadataViewsResolvers",
+        "NiftoryNonFungibleTokenProxy",
+        "NiftoryNFTDeployer"
+      ]
+    }
+  }
+}

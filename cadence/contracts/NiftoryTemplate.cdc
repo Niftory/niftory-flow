@@ -543,8 +543,8 @@ pub contract NiftoryTemplate: NonFungibleToken {
         nfts.append(<-nft)
         leftToMint = leftToMint - 1
       }
-      let fromSerial = (&nfts[0] as! &NFT).serial
-      let toSerial = (&nfts[numToMint - 1] as! &NFT).serial
+      let fromSerial = (&nfts[0] as &NFT).serial
+      let toSerial = (&nfts[numToMint - 1] as &NFT).serial
       emit NFTMintedBulk(
         setId: setId,
         templateId: templateId,
