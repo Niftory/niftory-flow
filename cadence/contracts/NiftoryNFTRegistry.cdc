@@ -253,26 +253,43 @@ pub contract NiftoryNFTRegistry {
   }
 
   // Default way to construct a RegistryItem, using suggested contract suffixes
-  pub fun generateRecord(account: Address, project: String): Record {
+  pub fun generateRecordFull(
+    contractAddress: Address,
+    nftManagerAddress: Address,
+    setManagerAddress: Address,
+    metadataViewsManagerAddress: Address,
+    project: String
+  ): Record {
     let collectionPaths = self.generateCollectionPaths(project: project)
     let nftManager = StoredResource(
-      account: account,
+      account: nftManagerAddress,
       paths: self.generateNFTManagerPaths(project: project)
     )
     let setManager = StoredResource(
-      account: account,
+      account: setManagerAddress,
       paths: self.generateSetManagerPaths(project: project)
     )
     let metadataViewsManager = StoredResource(
-      account: account,
+      account: metadataViewsManagerAddress,
       paths: self.generateMetadataViewsManagerPaths(project: project)
     )
     return Record(
-      contractAddress: account,
+      contractAddress: contractAddress,
       collectionPaths: collectionPaths,
       nftManager: nftManager,
       setManager: setManager,
       metadataViewsManager: metadataViewsManager
+    )
+  }
+
+  // Default way to construct a RegistryItem, using suggested contract suffixes
+  pub fun generateRecord(account: Address, project: String): Record {
+    return self.generateRecordFull(
+      contractAddress: account,
+      nftManagerAddress: account,
+      setManagerAddress: account,
+      metadataViewsManagerAddress: account,
+      project: project
     )
   }
 

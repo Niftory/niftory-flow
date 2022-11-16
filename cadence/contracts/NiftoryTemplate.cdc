@@ -61,6 +61,26 @@ pub contract NiftoryTemplate: NonFungibleToken {
 
   ///////////////////////////////////////////////////////////////////////////
 
+  // Contract metadata was modified
+  pub event ContractMetadataUpdated()
+
+  // Metadata Views Manager was locked
+  pub event MetadataViewsManagerLocked()
+
+  // Metadata Views Resolver was added
+  pub event MetadataViewsResolverAdded(type: Type)
+
+  // Metadata Views Resolver was removed
+  pub event MetadataViewsResolverRemoved(type: Type)
+
+  // Set Manager Name or Description updated
+  pub event SetManagerMetadataUpdated()
+
+  // Set added to Set Manager
+  pub event SetAddedToSetManager(setID: Int)
+
+  ///////////////////////////////////////////////////////////////////////////
+
   // Set `setId` was locked (no new templates can be added)
   pub event SetLocked(setId: Int)
 
@@ -79,10 +99,19 @@ pub contract NiftoryTemplate: NonFungibleToken {
   pub event TemplateLocked(setId: Int, templateId: Int)
 
   // Template `templateId` of Set `setId` had it's maxMint set to `maxMint`
-  pub event TemplateMaxMintSet(setId: Int, templateId: Int, maxMint: Int)
+  pub event TemplateMaxMintSet(setId: Int, templateId: Int, maxMint: UInt64)
 
   // Template `templateId` of Set `setId` has minted NFT with serial `serial`
   pub event NFTMinted(setId: Int, templateId: Int, serial: UInt64)
+
+  // Template `templateId` of Set `setId` has minted multiple NFTs of serials
+  // from 'fromSerial' to (and including) 'toSerial'
+  pub event NFTMintedBulk(
+    setId: Int,
+    templateId: Int,
+    fromSerial: UInt64,
+    toSerial: UInt64
+  )
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -151,6 +180,14 @@ pub contract NiftoryTemplate: NonFungibleToken {
       self.setId = setId
       self.templateId = templateId
       self.serial = serial
+    }
+
+    destroy() {
+      emit NFTBurned(
+        setId: self.setId,
+        templateId: self.templateId,
+        serial: self.serial
+      )
     }
   }
 
@@ -284,14 +321,12 @@ pub contract NiftoryTemplate: NonFungibleToken {
       &MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public}
     {
       return self._setManagerCap.borrow()!
-        as &MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public}
     }
 
     pub fun getMetadataViewsManagerPublic():
       &MetadataViewsManager.Manager{MetadataViewsManager.Public}
     {
       return self._metadataViewsManagerCap.borrow()!
-        as &MetadataViewsManager.Manager{MetadataViewsManager.Public}
     }
 
     pub fun getNFTCollectionData(): MetadataViews.NFTCollectionData {
@@ -342,7 +377,9 @@ pub contract NiftoryTemplate: NonFungibleToken {
     }
 
     access(self) fun _getSetMutable(_ setId: Int):
-      &MutableMetadataSet.Set{MutableMetadataSet.Private}
+      &MutableMetadataSet.Set{MutableMetadataSet.Private,
+        MutableMetadataSet.Public
+      }
     {
       return self._getSetManagerPrivate().getSetMutable(setId)
     }
@@ -368,10 +405,12 @@ pub contract NiftoryTemplate: NonFungibleToken {
     // ========================================================================
 
     pub fun modifyContractMetadata(): auth &AnyStruct {
+      emit ContractMetadataUpdated()
       return &NiftoryTemplate.metadata as auth &AnyStruct
     }
 
     pub fun replaceContractMetadata(_ metadata: AnyStruct?) {
+      emit ContractMetadataUpdated()
       NiftoryTemplate.metadata = metadata
     }
 
@@ -381,16 +420,19 @@ pub contract NiftoryTemplate: NonFungibleToken {
 
     pub fun lockMetadataViewsManager() {
       self._getMetadataViewsManagerPrivate().lock()
+      emit MetadataViewsManagerLocked()
     }
 
     pub fun setMetadataViewsResolver(
       _ resolver: AnyStruct{MetadataViewsManager.Resolver}
     ) {
       self._getMetadataViewsManagerPrivate().addResolver(resolver)
+      emit MetadataViewsResolverAdded(type: resolver.type)
     }
 
     pub fun removeMetadataViewsResolver(_ type: Type) {
       self._getMetadataViewsManagerPrivate().removeResolver(type)
+      emit MetadataViewsResolverRemoved(type: type)
     }
 
     // ========================================================================
@@ -399,14 +441,19 @@ pub contract NiftoryTemplate: NonFungibleToken {
 
     pub fun setMetadataManagerName(_ name: String) {
       self._getSetManagerPrivate().setName(name)
+      emit SetManagerMetadataUpdated()
     }
 
     pub fun setMetadataManagerDescription(_ description: String) {
       self._getSetManagerPrivate().setDescription(description)
+      emit SetManagerMetadataUpdated()
     }
 
     pub fun addSet(_ set: @MutableMetadataSet.Set) {
-      self._getSetManagerPrivate().addSet(<-set)
+      let setManager = self._getSetManagerPrivate()
+      let setId = setManager.numSets()
+      setManager.addSet(<-set)
+      emit SetAddedToSetManager(setID: setId)
     }
 
     // ========================================================================
@@ -415,25 +462,32 @@ pub contract NiftoryTemplate: NonFungibleToken {
 
     pub fun lockSet(setId: Int) {
       self._getSetMutable(setId).lock()
+      emit SetLocked(setId: setId)
     }
 
     pub fun lockSetMetadata(setId: Int) {
       self._getSetMutable(setId).metadataMutable().lock()
+      emit SetMetadataLocked(setId: setId)
     }
 
     pub fun modifySetMetadata(setId: Int): auth &AnyStruct {
+      emit SetMetadataModified(setId: setId)
       return self._getSetMutable(setId).metadataMutable().getMutable()
     }
 
     pub fun replaceSetMetadata(setId: Int, new: AnyStruct) {
       self._getSetMutable(setId).metadataMutable().replace(new)
+      emit SetMetadataModified(setId: setId)
     }
 
     pub fun addTemplate(
       setId: Int,
       template: @MutableMetadataTemplate.Template
     ) {
+      let set = self._getSetMutable(setId)
+      let templateId = set.numTemplates()
       self._getSetMutable(setId).addTemplate(<-template)
+      emit TemplateAddedToSet(setId: setId, templateId: templateId)
     }
 
     // ========================================================================
@@ -441,10 +495,16 @@ pub contract NiftoryTemplate: NonFungibleToken {
     // ========================================================================
 
     pub fun lockTemplate(setId: Int, templateId: Int) {
+      emit TemplateLocked(setId: setId, templateId: templateId)
       self._getTemplateMutable(setId, templateId).lock()
     }
 
     pub fun setTemplateMaxMint(setId: Int, templateId: Int, max: UInt64) {
+      emit TemplateMaxMintSet(
+        setId: setId,
+        templateId: templateId,
+        maxMint: max
+      )
       self._getTemplateMutable(setId, templateId).setMaxMint(max)
     }
 
@@ -457,6 +517,7 @@ pub contract NiftoryTemplate: NonFungibleToken {
         templateId: templateId,
         serial: serial
       )
+      emit NFTMinted(setId: setId, templateId: templateId, serial: serial)
       return <-nft
     }
 
@@ -465,8 +526,11 @@ pub contract NiftoryTemplate: NonFungibleToken {
       templateId: Int,
       numToMint: UInt64,
     ): @[NonFungibleToken.NFT] {
+      pre {
+        numToMint > 0: "Must mint at least one NFT"
+      }
       let template = self._getTemplateMutable(setId, templateId)
-      let nfts: @[NonFungibleToken.NFT] <- []
+      let nfts: @[NFT] <- []
       var leftToMint = numToMint
       while leftToMint > 0 {
         template.registerMint()
@@ -479,6 +543,14 @@ pub contract NiftoryTemplate: NonFungibleToken {
         nfts.append(<-nft)
         leftToMint = leftToMint - 1
       }
+      let fromSerial = (&nfts[0] as! &NFT).serial
+      let toSerial = (&nfts[numToMint - 1] as! &NFT).serial
+      emit NFTMintedBulk(
+        setId: setId,
+        templateId: templateId,
+        fromSerial: fromSerial,
+        toSerial: toSerial
+      )
       return <-nfts
     }
 
@@ -488,14 +560,17 @@ pub contract NiftoryTemplate: NonFungibleToken {
 
     pub fun lockNFTMetadata(setId: Int, templateId: Int) {
       self._getNFTMetadata(setId, templateId).lock()
+      emit NFTMetadataLocked(setId: setId, templateId: templateId)
     }
 
     pub fun modifyNFTMetadata(setId: Int, templateId: Int): auth &AnyStruct {
+      emit NFTMetadataModified(setId: setId, templateId: templateId)
       return self._getNFTMetadata(setId, templateId).getMutable()
     }
 
     pub fun replaceNFTMetadata(setId: Int, templateId: Int, new: AnyStruct) {
       self._getNFTMetadata(setId, templateId).replace(new)
+      emit NFTMetadataModified(setId: setId, templateId: templateId)
     }
 
     // ========================================================================
@@ -591,5 +666,7 @@ pub contract NiftoryTemplate: NonFungibleToken {
         self.NFT_MANAGER_PRIVATE_PATH,
         target: self.NFT_MANAGER_STORAGE_PATH
       )
+
+    emit ContractInitialized()
   }
 }

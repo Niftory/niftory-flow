@@ -154,16 +154,18 @@ pub contract NiftoryNonFungibleToken {
     // Set arbitrary metadata for this NFT contract, if implemented
     pub fun replaceContractMetadata(_ metadata: AnyStruct?)
 
-
     // ========================================================================
     // Metadata Views Manager
     // ========================================================================
 
-    // Lock MetadataViewsResolver so that resolvers can be neither added nor removed
+    // Lock MetadataViewsResolver so that resolvers can be neither added nor
+    // removed
     pub fun lockMetadataViewsManager()
 
     // Add the given resolver to the MetadataViewsResolver if not locked
-    pub fun setMetadataViewsResolver(_ resolver: AnyStruct{MetadataViewsManager.Resolver})
+    pub fun setMetadataViewsResolver(
+      _ resolver: AnyStruct{MetadataViewsManager.Resolver}
+    )
 
     // Remove the given resolver from the MetadataViewsResolver if not locked
     pub fun removeMetadataViewsResolver(_ type: Type)
