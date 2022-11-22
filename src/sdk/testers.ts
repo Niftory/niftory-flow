@@ -2,10 +2,17 @@ import { getAccountAddress, mintFlow } from 'flow-js-testing'
 import { ActorContext } from './actor'
 import { ScriptResult } from './script'
 
-const checkScriptSucceeded = <T>(result: ScriptResult<T>): ScriptResult<T> => {
+type ScriptTester<T> = (result: ScriptResult<T>) => ScriptResult<T>
+const testScript =
+  <T>(tester: (result: ScriptResult<T>) => void): ScriptTester<T> =>
+  (result) => {
+    tester(result)
+    return result
+  }
+
+const checkScriptSucceeded = testScript((result) => {
   expect(result._tag).toBe('success')
-  return result
-}
+})
 
 const checkScriptFailed = <T>(result: ScriptResult<T>): ScriptResult<T> => {
   expect(result._tag).toBe('failure')

@@ -44,6 +44,9 @@ pub contract MetadataViewsManager {
 
   pub resource interface Public {
 
+    // Is manager locked?
+    pub fun locked(): Bool
+
     // Get all views supported by the manager
     pub fun getViews(): [Type]
 
@@ -78,6 +81,10 @@ pub contract MetadataViewsManager {
     // ========================================================================
     // Public
     // ========================================================================
+
+    pub fun locked(): Bool {
+      return self._locked
+    }
 
     pub fun getViews(): [Type] {
       return self._resolvers.keys
