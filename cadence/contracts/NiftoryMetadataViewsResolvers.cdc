@@ -159,15 +159,15 @@ pub contract NiftoryMetadataViewsResolvers {
     pub let type: Type
 
     // name
-    pub let nameField: String
+    pub let nameFields: [String]
     pub let defaultName: String
 
     // description
-    pub let descriptionField: String
+    pub let descriptionFields: [String]
     pub let defaultDescription: String
 
     // image
-    pub let imageField: String
+    pub let imageFields: [String]
     pub let defaultImagePrefix: String
     pub let defaultImage: String
 
@@ -186,20 +186,34 @@ pub contract NiftoryMetadataViewsResolvers {
       )
 
       // name
-      let name = metadata[self.nameField] ?? self.defaultName
+      // iterate through nameFields until we have one that exists in metadata
+      let name = NiftoryMetadataViewsResolvers._firstValueOrElse(
+        metadata: &metadata as &{String: String},
+        fields: self.nameFields,
+        default: self.defaultName
+      )
 
       // description
-      let description = metadata[self.descriptionField]
-        ?? self.defaultDescription
+      // do the same for descriptionFields
+      let description = NiftoryMetadataViewsResolvers._firstValueOrElse(
+        metadata: &metadata as &{String: String},
+        fields: self.descriptionFields,
+        default: self.defaultDescription
+      )
 
       // image
+      let uri = NiftoryMetadataViewsResolvers._firstValueOrElse(
+        metadata: &metadata as &{String: String},
+        fields: self.imageFields,
+        default: self.defaultImage
+      )
       let url = NiftoryMetadataViewsResolvers._useIpfsGateway(
         ipfsGateway: self.ipfsGateway,
         uri: NiftoryMetadataViewsResolvers._prefixUri(
           allowedPrefixes:
             NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
           default: self.defaultImagePrefix,
-          uri: metadata[self.imageField] ?? self.defaultImage
+          uri: uri
         )
       )
 
@@ -211,21 +225,21 @@ pub contract NiftoryMetadataViewsResolvers {
     }
 
     init(
-      nameField: String,
+      nameFields: [String],
       defaultName: String,
-      descriptionField: String,
+      descriptionFields: [String],
       defaultDescription: String,
-      imageField: String,
+      imageFields: [String],
       defaultImagePrefix: String,
       defaultImage: String,
       ipfsGateway: String
     ) {
       self.type = Type<MetadataViews.Display>()
-      self.nameField = nameField
+      self.nameFields = nameFields
       self.defaultName = defaultName
-      self.descriptionField = descriptionField
+      self.descriptionFields = descriptionFields
       self.defaultDescription = defaultDescription
-      self.imageField = imageField
+      self.imageFields = imageFields
       self.defaultImagePrefix = defaultImagePrefix
       self.defaultImage = defaultImage
       self.ipfsGateway = ipfsGateway
@@ -398,27 +412,27 @@ pub contract NiftoryMetadataViewsResolvers {
     pub let type: Type
 
     // name
-    pub let nameField: String
+    pub let nameFields: [String]
     pub let defaultName: String
 
     // description
-    pub let descriptionField: String
+    pub let descriptionFields: [String]
     pub let defaultDescription: String
 
     // external URL
-    pub let externalUrlField: String
+    pub let externalUrlFields: [String]
     pub let defaultExternalURLPrefix: String
     pub let defaultExternalURL: String
 
     // square image
-    pub let squareImageField: String
+    pub let squareImageFields: [String]
     pub let defaultSquareImagePrefix: String
     pub let defaultSquareImage: String
     pub let squareImageMediaTypeField: String
     pub let defaultSquareImageMediaType: String
 
     // banner image
-    pub let bannerImageField: String
+    pub let bannerImageFields: [String]
     pub let defaultBannerImagePrefix: String
     pub let defaultBannerImage: String
     pub let bannerImageMediaTypeField: String
@@ -442,30 +456,47 @@ pub contract NiftoryMetadataViewsResolvers {
       )
 
       // name
-      let name = metadata[self.nameField] ?? self.defaultName
+      let name = NiftoryMetadataViewsResolvers._firstValueOrElse(
+        metadata: &metadata as &{String: String},
+        fields: self.nameFields,
+        default: self.defaultName
+      )
 
       // description
-      let description = metadata[self.descriptionField]
-        ?? self.defaultDescription
+      let description = NiftoryMetadataViewsResolvers._firstValueOrElse(
+        metadata: &metadata as &{String: String},
+        fields: self.descriptionFields,
+        default: self.defaultDescription
+      )
 
       // external URL
+      let externalUri = NiftoryMetadataViewsResolvers._firstValueOrElse(
+        metadata: &metadata as &{String: String},
+        fields: self.externalUrlFields,
+        default: self.defaultExternalURL
+      )
       let externalURL = MetadataViews.ExternalURL(url:
         NiftoryMetadataViewsResolvers._prefixUri(
           allowedPrefixes:
             NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
           default: self.defaultExternalURLPrefix,
-          uri: metadata[self.externalUrlField] ?? self.defaultExternalURL
+          uri: externalUri
         )
       )
 
       // square image
+      let squareImageUri = NiftoryMetadataViewsResolvers._firstValueOrElse(
+        metadata: &metadata as &{String: String},
+        fields: self.squareImageFields,
+        default: self.defaultSquareImage
+      )
       let squareImageURL = NiftoryMetadataViewsResolvers._useIpfsGateway(
         ipfsGateway: self.ipfsGateway,
         uri: NiftoryMetadataViewsResolvers._prefixUri(
           allowedPrefixes:
             NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
           default: self.defaultSquareImagePrefix,
-          uri: metadata[self.squareImageField] ?? self.defaultSquareImage
+          uri: squareImageUri
         )
       )
       let squareImageMediaType = metadata[self.squareImageMediaTypeField]
@@ -478,13 +509,18 @@ pub contract NiftoryMetadataViewsResolvers {
       )
 
       // banner image
+      let bannerImageUri = NiftoryMetadataViewsResolvers._firstValueOrElse(
+        metadata: &metadata as &{String: String},
+        fields: self.bannerImageFields,
+        default: self.defaultBannerImage
+      )
       let bannerImageURL = NiftoryMetadataViewsResolvers._useIpfsGateway(
         ipfsGateway: self.ipfsGateway,
         uri: NiftoryMetadataViewsResolvers._prefixUri(
           allowedPrefixes:
             NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
           default: self.defaultBannerImagePrefix,
-          uri: metadata[self.bannerImageField] ?? self.defaultBannerImage
+          uri: bannerImageUri
         )
       )
       let bannerImageMediaType = metadata[self.bannerImageMediaTypeField]
@@ -513,19 +549,19 @@ pub contract NiftoryMetadataViewsResolvers {
     }
 
     init(
-      nameField: String,
+      nameFields: [String],
       defaultName: String,
-      descriptionField: String,
+      descriptionFields: [String],
       defaultDescription: String,
-      externalUrlField: String,
+      externalUrlFields: [String],
       defaultExternalURLPrefix: String,
       defaultExternalURL: String,
-      squareImageField: String,
+      squareImageFields: [String],
       defaultSquareImagePrefix: String,
       defaultSquareImage: String,
       squareImageMediaTypeField: String,
       defaultSquareImageMediaType: String,
-      bannerImageField: String,
+      bannerImageFields: [String],
       defaultBannerImagePrefix: String,
       defaultBannerImage: String,
       bannerImageMediaTypeField: String,
@@ -534,19 +570,19 @@ pub contract NiftoryMetadataViewsResolvers {
       ipfsGateway: String
     ) {
       self.type = Type<MetadataViews.NFTCollectionDisplay>()
-      self.nameField = nameField
+      self.nameFields = nameFields
       self.defaultName = defaultName
-      self.descriptionField = descriptionField
+      self.descriptionFields = descriptionFields
       self.defaultDescription = defaultDescription
-      self.externalUrlField = externalUrlField
+      self.externalUrlFields = externalUrlFields
       self.defaultExternalURLPrefix = defaultExternalURLPrefix
       self.defaultExternalURL = defaultExternalURL
-      self.squareImageField = squareImageField
+      self.squareImageFields = squareImageFields
       self.defaultSquareImagePrefix = defaultSquareImagePrefix
       self.defaultSquareImage = defaultSquareImage
       self.squareImageMediaTypeField = squareImageMediaTypeField
       self.defaultSquareImageMediaType = defaultSquareImageMediaType
-      self.bannerImageField = bannerImageField
+      self.bannerImageFields = bannerImageFields
       self.defaultBannerImagePrefix = defaultBannerImagePrefix
       self.defaultBannerImage = defaultBannerImage
       self.bannerImageMediaTypeField = bannerImageMediaTypeField
@@ -755,5 +791,20 @@ pub contract NiftoryMetadataViewsResolvers {
       }
     }
     return MetadataViews.Traits(traits: traits)
+  }
+
+  // Return the first value from metadata that exists given a list of possible
+  // fields and a default if none is found
+  access(self) fun _firstValueOrElse(
+    metadata: &{String: String},
+    fields: [String],
+    default: String,
+  ): String {
+    for field in fields {
+      if let value = metadata[field] {
+        return value
+      }
+    }
+    return default
   }
 }

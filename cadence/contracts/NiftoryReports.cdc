@@ -67,5 +67,4 @@ pub contract NiftoryReports {
       self.collections = collections
     }
   }
-
 }
