@@ -52,6 +52,9 @@ pub contract MetadataViewsManager {
 
     // Resolve a particular view of a provided reference struct (i.e. NFT)
     pub fun resolveView(view: Type, nftRef: AnyStruct): AnyStruct?
+
+    // Inspect a raw resolver
+    pub fun inspectView(view: Type): {Resolver}?
   }
 
   pub resource interface Private {
@@ -96,6 +99,10 @@ pub contract MetadataViewsManager {
         return nil
       }
       return resolverRef!.resolve(nftRef)
+    }
+
+    pub fun inspectView(view: Type): {Resolver}? {
+      return self._resolvers[view]
     }
 
     // ========================================================================
