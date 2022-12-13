@@ -7,29 +7,29 @@ transaction(
   registryAddress: Address,
   brand: String,
   recipientAddress: Address,
-  id: UInt64
+  ids: [UInt64]
 ) {
 
-  let nft: @NonFungibleToken.NFT
-  let receiverPath: PublicPath
+  let nfts: @[NonFungibleToken.NFT]
+  let paths: NiftoryNFTRegistry.Paths
 
   prepare(acct: AuthAccount) {
-    let nftManager = NiftoryNFTRegistry
-      .getNFTManagerPublic(registryAddress, brand)
-    let paths = NiftoryNFTRegistry
+    self.paths = NiftoryNFTRegistry
       .getCollectionPaths(registryAddress, brand)
     let collection = acct
-      .getCapability<&{NiftoryNonFungibleToken.CollectionPrivate}>(paths.private)
+      .getCapability<&{
+        NiftoryNonFungibleToken.CollectionPublic,
+        NiftoryNonFungibleToken.CollectionPrivate
+      }>(self.paths.private)
       .borrow()!
-    self.nft <- collection.withdraw(withdrawID: id)
-    self.receiverPath = paths.public
+    self.nfts <- collection.withdrawBulk(withdrawIDs: ids)
   }
 
   execute {
     let recipientCollection = getAccount(recipientAddress)
       .getCapability<&{NiftoryNonFungibleToken.CollectionPublic}>(
-        self.receiverPath
+        self.paths.public
       ).borrow()!
-    recipientCollection.deposit(token: <-self.nft)
+    recipientCollection.depositBulk(tokens: <-self.nfts)
   }
 }

@@ -55,8 +55,7 @@ describe('basic-test', () => {
 
   test('+++', async () => {
     // Create accounts and get their addresses
-    type AddressBook = { [key: string]: string }
-    const addresses: AddressBook = {
+    const addresses = {
       baseContracts: await initAccount(BASE_CONTRACTS, '100'),
       dapper: await initAccount(DAPPER, '100'),
       niftoryLibraries: await initAccount(NIFTORY_LIBRARIES, '100'),

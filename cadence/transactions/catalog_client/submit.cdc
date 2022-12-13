@@ -33,9 +33,7 @@ transaction(
     ) == nil {
       let proposalManager <- NFTCatalog.createNFTCatalogProposalManager()
       acct.save(<-proposalManager, to: NFTCatalog.ProposalManagerStoragePath)
-      acct.link<&NFTCatalog.NFTCatalogProposalManager{
-        NFTCatalog.NFTCatalogProposalManagerPublic
-      }>(
+      acct.link<&NFTCatalog.NFTCatalogProposalManager{NFTCatalog.NFTCatalogProposalManagerPublic}>(
         NFTCatalog.ProposalManagerPublicPath,
         target: NFTCatalog.ProposalManagerStoragePath
       )
@@ -48,6 +46,26 @@ transaction(
   }
 
   execute {
+    let gateway = "https://cloudflare-ipfs.com/ipfs/"
+    var realSquareImageMediaURL = squareImageMediaURL
+    var realBannerImageMediaURL = bannerImageMediaURL
+    if realSquareImageMediaURL.slice(from: 0, upTo: 7) == "ipfs://" {
+      realSquareImageMediaURL = gateway.concat(
+        realSquareImageMediaURL.slice(
+          from: 7,
+          upTo: realSquareImageMediaURL.length
+        )
+      )
+    }
+    if realBannerImageMediaURL.slice(from: 0, upTo: 7) == "ipfs://" {
+      realBannerImageMediaURL = gateway.concat(
+        realBannerImageMediaURL.slice(
+          from: 7,
+          upTo: realBannerImageMediaURL.length
+        )
+      )
+    }
+
     var privateLinkedType: Type? = nil
     if (privateLinkedTypeRestrictions.length == 0) {
       privateLinkedType = CompositeType(publicLinkedTypeIdentifier)
@@ -71,14 +89,14 @@ transaction(
 
     let squareMedia = MetadataViews.Media(
             file: MetadataViews.HTTPFile(
-              url: squareImageMediaURL
+              url: realSquareImageMediaURL
             ),
             mediaType: squareImageMediaType
           )
 
     let bannerMedia = MetadataViews.Media(
             file: MetadataViews.HTTPFile(
-              url: bannerImageMediaURL
+              url: realBannerImageMediaURL
             ),
             mediaType: bannerImageMediaType
           )

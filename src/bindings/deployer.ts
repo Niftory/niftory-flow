@@ -1,5 +1,5 @@
 import { AnyActor } from '../sdk/actor'
-import { context } from '../utils'
+import { context } from '../sdk/utils'
 
 type ContractAccountConfig = {}
 

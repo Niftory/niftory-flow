@@ -6,8 +6,10 @@ import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 transaction(
   registryAddress: Address,
   brand: String,
-  id: UInt64
+  ids: [UInt64]
 ) {
+
+  let nfts: @[NonFungibleToken.NFT]
 
   prepare(acct: AuthAccount) {
     let paths = NiftoryNFTRegistry
@@ -15,6 +17,10 @@ transaction(
     let collection = acct
       .getCapability<&{NiftoryNonFungibleToken.CollectionPrivate}>(paths.private)
       .borrow()!
-    destroy collection.withdraw(withdrawID: id)
+    self.nfts <- collection.withdrawBulk(withdrawIDs: ids)
+  }
+
+  execute {
+    destroy self.nfts
   }
 }

@@ -1,8 +1,110 @@
 {
-  "emulators": {
-    "default": {
-      "port": 3569,
-      "serviceAccount": "emulator-account"
+  "contracts": {
+    "DapperUtilityCoin": {
+      "source": "./cadence/contracts/DapperUtilityCoin.cdc",
+      "aliases": {
+        "mainnet": "ead892083b3e2c6c",
+        "testnet": "82ec283f88a62e65"
+      }
+    },
+    "FUSD": {
+      "source": "./cadence/contracts/FUSD.cdc",
+      "aliases": {
+        "mainnet": "3c5959b568896393",
+        "testnet": "e223d8a629e49c68"
+      }
+    },
+    "FlowFees": {
+      "source": "./cadence/contracts/FlowFees.cdc",
+      "aliases": {
+        "emulator": "e5a8b7f23e8b548f",
+        "mainnet": "f919ee77447b7497",
+        "testnet": "912d5440f7e3769e"
+      }
+    },
+    "FlowStorageFees": {
+      "source": "./cadence/contracts/FlowStorageFees.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "mainnet": "e467b9dd11fa00df",
+        "testnet": "8c5303eaa26202d6"
+      }
+    },
+    "FlowToken": {
+      "source": "./cadence/contracts/FlowToken.cdc",
+      "aliases": {
+        "emulator": "0ae53cb6e3f42a79",
+        "mainnet": "1654653399040a61",
+        "testnet": "7e60df042a9c0868"
+      }
+    },
+    "FlowUtilityToken": {
+      "source": "./cadence/contracts/FlowUtilityToken.cdc",
+      "aliases": {
+        "mainnet": "ead892083b3e2c6c",
+        "testnet": "82ec283f88a62e65"
+      }
+    },
+    "FungibleToken": {
+      "source": "./cadence/contracts/FungibleToken.cdc",
+      "aliases": {
+        "emulator": "ee82856bf20e2aa6",
+        "mainnet": "f233dcee88fe0abe",
+        "testnet": "9a0766d93b6608b7"
+      }
+    },
+    "MetadataViews": {
+      "source": "./cadence/contracts/MetadataViews.cdc",
+      "aliases": {
+        "mainnet": "1d7e57aa55817448",
+        "testnet": "631e88ae7f1d7c20"
+      }
+    },
+    "MetadataViewsManager": "./cadence/contracts/MetadataViewsManager.cdc",
+    "MutableMetadata": "./cadence/contracts/MutableMetadata.cdc",
+    "MutableMetadataSet": "./cadence/contracts/MutableMetadataSet.cdc",
+    "MutableMetadataSetManager": "./cadence/contracts/MutableMetadataSetManager.cdc",
+    "MutableMetadataTemplate": "./cadence/contracts/MutableMetadataTemplate.cdc",
+    "NFTCatalog": {
+      "source": "./cadence/contracts/NFTCatalog.cdc",
+      "aliases": {
+        "mainnet": "49a7cda3a1eecc29",
+        "testnet": "324c34e1c517e4db"
+      }
+    },
+    "NFTCatalogAdmin": {
+      "source": "./cadence/contracts/NFTCatalogAdmin.cdc",
+      "aliases": {
+        "mainnet": "49a7cda3a1eecc29",
+        "testnet": "324c34e1c517e4db"
+      }
+    },
+    "NFTStorefrontV2": {
+      "source": "./cadence/contracts/NFTStorefrontV2.cdc",
+      "aliases": {
+        "mainnet": "4eb8a10cb9f87357",
+        "testnet": "2d55b98eb200daef"
+      }
+    },
+    "NiftoryMetadataViewsResolvers": "./cadence/contracts/NiftoryMetadataViewsResolvers.cdc",
+    "NiftoryNFTDeployer": "./cadence/contracts/NiftoryNFTDeployer.cdc",
+    "NiftoryNFTRegistry": "./cadence/contracts/NiftoryNFTRegistry.cdc",
+    "NiftoryNonFungibleToken": "./cadence/contracts/NiftoryNonFungibleToken.cdc",
+    "NiftoryNonFungibleTokenProxy": "./cadence/contracts/NiftoryNonFungibleTokenProxy.cdc",
+    "NiftoryTemplate": "./cadence/contracts/NiftoryTemplate.cdc",
+    "NonFungibleToken": {
+      "source": "./cadence/contracts/NonFungibleToken.cdc",
+      "aliases": {
+        "mainnet": "1d7e57aa55817448",
+        "testnet": "631e88ae7f1d7c20"
+      }
+    },
+    "TokenForwarding": {
+      "source": "./cadence/contracts/TokenForwarding.cdc",
+      "aliases": {
+        "mainnet": "e544175ee0461c4b",
+        "testnet": "51ea0e37c27a1f1a"
+      }
     }
   },
   "networks": {
@@ -15,28 +117,28 @@
       "address": "f8d6e0586b0a20c7",
       "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
     },
-    "emulator-core-contracts": {
-      "address": "ee82856bf20e2aa6",
-      "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
-    },
-    "emulator-mint": {
-      "address": "0ae53cb6e3f42a79",
-      "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
-    },
-    "emulator-extra-contracts": {
-      "address": "01cf0e2f2f715450",
-      "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
-    },
     "emulator-catalog": {
       "address": "179b6b1cb6755e31",
+      "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
+    },
+    "emulator-collector": {
+      "address": "f669cb8d41ce0c74",
+      "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
+    },
+    "emulator-core-contracts": {
+      "address": "ee82856bf20e2aa6",
       "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
     },
     "emulator-dapper": {
       "address": "f3fcd2c1a78f5eee",
       "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
     },
-    "emulator-niftory-contracts": {
-      "address": "e03daebed8ca0615",
+    "emulator-extra-contracts": {
+      "address": "01cf0e2f2f715450",
+      "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
+    },
+    "emulator-mint": {
+      "address": "0ae53cb6e3f42a79",
       "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
     },
     "emulator-niftory-admin": {
@@ -47,126 +149,18 @@
       "address": "120e725050340cab",
       "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
     },
-    "emulator-collector": {
-      "address": "f669cb8d41ce0c74",
+    "emulator-niftory-contracts": {
+      "address": "e03daebed8ca0615",
       "key": "418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69"
     }
   },
-  "contracts": {
-    "FungibleToken": {
-      "source": "./cadence/contracts/FungibleToken.cdc",
-      "aliases": {
-        "emulator": "ee82856bf20e2aa6",
-        "testnet": "9a0766d93b6608b7",
-        "mainnet": "f233dcee88fe0abe"
-      }
-    },
-    "FlowToken": {
-      "source": "./cadence/contracts/FlowToken.cdc",
-      "aliases": {
-        "emulator": "0ae53cb6e3f42a79",
-        "testnet": "7e60df042a9c0868",
-        "mainnet": "1654653399040a61"
-      }
-    },
-    "FlowFees": {
-      "source": "./cadence/contracts/FlowFees.cdc",
-      "aliases": {
-        "emulator": "e5a8b7f23e8b548f",
-        "testnet": "912d5440f7e3769e",
-        "mainnet": "f919ee77447b7497"
-      }
-    },
-    "FlowStorageFees": {
-      "source": "./cadence/contracts/FlowStorageFees.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "8c5303eaa26202d6",
-        "mainnet": "e467b9dd11fa00df"
-      }
-    },
-    "NonFungibleToken": {
-      "source": "./cadence/contracts/NonFungibleToken.cdc",
-      "aliases": {
-        "testnet": "631e88ae7f1d7c20",
-        "mainnet": "1d7e57aa55817448"
-      }
-    },
-    "MetadataViews": {
-      "source": "./cadence/contracts/MetadataViews.cdc",
-      "aliases": {
-        "testnet": "631e88ae7f1d7c20",
-        "mainnet": "1d7e57aa55817448"
-      }
-    },
-    "FUSD": {
-      "source": "./cadence/contracts/FUSD.cdc",
-      "aliases": {
-        "testnet": "e223d8a629e49c68",
-        "mainnet": "3c5959b568896393"
-      }
-    },
-    "NFTStorefrontV2": {
-      "source": "./cadence/contracts/NFTStorefrontV2.cdc",
-      "aliases": {
-        "testnet": "2d55b98eb200daef",
-        "mainnet": "4eb8a10cb9f87357"
-      }
-    },
-    "TokenForwarding": {
-      "source": "./cadence/contracts/TokenForwarding.cdc",
-      "aliases": {
-        "testnet": "51ea0e37c27a1f1a",
-        "mainnet": "e544175ee0461c4b"
-      }
-    },
-    "NFTCatalog": {
-      "source": "./cadence/contracts/NFTCatalog.cdc",
-      "aliases": {
-        "testnet": "324c34e1c517e4db",
-        "mainnet": "49a7cda3a1eecc29"
-      }
-    },
-    "NFTCatalogAdmin": {
-      "source": "./cadence/contracts/NFTCatalogAdmin.cdc",
-      "aliases": {
-        "testnet": "324c34e1c517e4db",
-        "mainnet": "49a7cda3a1eecc29"
-      }
-    },
-    "DapperUtilityCoin": {
-      "source": "./cadence/contracts/DapperUtilityCoin.cdc",
-      "aliases": {
-        "testnet": "82ec283f88a62e65",
-        "mainnet": "ead892083b3e2c6c"
-      }
-    },
-    "FlowUtilityToken": {
-      "source": "./cadence/contracts/FlowUtilityToken.cdc",
-      "aliases": {
-        "testnet": "82ec283f88a62e65",
-        "mainnet": "ead892083b3e2c6c"
-      }
-    },
-    "MetadataViewsManager": "./cadence/contracts/MetadataViewsManager.cdc",
-    "MutableMetadata": "./cadence/contracts/MutableMetadata.cdc",
-    "MutableMetadataTemplate": "./cadence/contracts/MutableMetadataTemplate.cdc",
-    "MutableMetadataSet": "./cadence/contracts/MutableMetadataSet.cdc",
-    "MutableMetadataSetManager": "./cadence/contracts/MutableMetadataSetManager.cdc",
-    "NiftoryNonFungibleToken": "./cadence/contracts/NiftoryNonFungibleToken.cdc",
-    "NiftoryNFTRegistry": "./cadence/contracts/NiftoryNFTRegistry.cdc",
-    "NiftoryMetadataViewsResolvers": "./cadence/contracts/NiftoryMetadataViewsResolvers.cdc",
-    "NiftoryNonFungibleTokenProxy": "./cadence/contracts/NiftoryNonFungibleTokenProxy.cdc",
-    "NiftoryTemplate": "./cadence/contracts/NiftoryTemplate.cdc",
-    "NiftoryNFTDeployer": "./cadence/contracts/NiftoryNFTDeployer.cdc"
-  },
   "deployments": {
     "emulator": {
-      "emulator-core-contracts": ["NonFungibleToken", "MetadataViews"],
-      "emulator-mint": ["FUSD"],
-      "emulator-extra-contracts": ["NFTStorefrontV2", "TokenForwarding"],
       "emulator-catalog": ["NFTCatalog", "NFTCatalogAdmin"],
+      "emulator-core-contracts": ["NonFungibleToken", "MetadataViews"],
       "emulator-dapper": ["DapperUtilityCoin", "FlowUtilityToken"],
+      "emulator-extra-contracts": ["NFTStorefrontV2", "TokenForwarding"],
+      "emulator-mint": ["FUSD"],
       "emulator-niftory-contracts": [
         "MetadataViewsManager",
         "MutableMetadata",
