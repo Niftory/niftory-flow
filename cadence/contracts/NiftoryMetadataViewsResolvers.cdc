@@ -684,6 +684,35 @@ pub contract NiftoryMetadataViewsResolvers {
   }
 
   // ========================================================================
+  // Serial
+  // ========================================================================
+
+  pub struct SerialResolver: MetadataViewsManager.Resolver {
+
+    // Serial
+    pub let type: Type
+
+    // Niftory NFTs are assumed to have metadata implemented as a
+    // {String: String} map. In order to create a Serial, we need to know
+    // the Display's name, description, and URI pointing to the Display media
+    // image. In this case, the resolver will try to fill those fields in
+    // based on the provided field keys, or use a default value if that key
+    // does not exist in the NFT metadata.
+    pub fun resolve(_ nftRef: AnyStruct): AnyStruct? {
+      let nft = nftRef as! &{NiftoryNonFungibleToken.NFTPublic}
+
+      // serial
+      let serial = nft.serial
+
+      return MetadataViews.Serial(serial: serial)
+    }
+
+    init() {
+      self.type = Type<MetadataViews.Serial>()
+    }
+  }
+
+  // ========================================================================
   // Contract functions
   // ========================================================================
 
