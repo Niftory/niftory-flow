@@ -2,15 +2,17 @@ import FungibleToken from "../../contracts/FungibleToken.cdc"
 import FungibleTokenSwitchboard from "../../contracts/FungibleTokenSwitchboard.cdc"
 import MetadataViews from "../../contracts/MetadataViews.cdc"
 
+import FlowToken from "../../contracts/FlowToken.cdc"
+/*
 import TokenForwarding from "../../contracts/TokenForwarding.cdc"
 import FiatToken from "../../contracts/FiatToken.cdc"
 import OnChainMultiSig from "../../contracts/OnChainMultiSig.cdc"
 import FUSD from "../../contracts/FUSD.cdc"
+*/
 
 import NiftoryNonFungibleToken from "../../contracts/NiftoryNonFungibleToken.cdc"
 import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 import NiftoryMetadataViewsResolvers from "../../contracts/NiftoryMetadataViewsResolvers.cdc"
-
 
 transaction(
   registryAddress: Address,
@@ -71,6 +73,7 @@ transaction(
 
     // Flow - assume it's initialized
 
+    /*
     // FUSD
     if(acct.borrow<&FUSD.Vault>(from: /storage/fusdVault) == nil) {
       acct.save(<-FUSD.createEmptyVault(), to: /storage/fusdVault)
@@ -104,7 +107,7 @@ transaction(
       )
     }
 
-    // DUC
+    // DUC - if dapperAddressMaybe is provided
     if acct.borrow<&TokenForwarding.Forwarder>(
       from: /storage/dapperUtilityCoinReceiver
     ) == nil {
@@ -127,7 +130,7 @@ transaction(
       }
     }
 
-    // FUT
+    // FUT - if dapperAddressMaybe is provided
     if acct.borrow<&TokenForwarding.Forwarder>(
       from: /storage/flowUtilityTokenReceiver
     ) == nil {
@@ -149,12 +152,22 @@ transaction(
         )
       }
     }
+    */
 
     // initialize switchboard, if not existing
     if acct.borrow<&FungibleTokenSwitchboard.Switchboard>(
       from: FungibleTokenSwitchboard.StoragePath
     ) == nil {
       let switchboard <- FungibleTokenSwitchboard.createSwitchboard()
+
+      // borrow flow receiver
+      let flowReceiver = acct
+        .getCapability<&AnyResource{FungibleToken.Receiver}>(
+          /public/flowTokenReceiver
+        )
+      let flowType = Type<@FlowToken.Vault>()
+
+      switchboard.addNewVaultWrapper(capability: flowReceiver, type: flowType)
       acct.save(<-switchboard, to: FungibleTokenSwitchboard.StoragePath)
       acct.link<&FungibleTokenSwitchboard.Switchboard{FungibleToken.Receiver}>(
         FungibleTokenSwitchboard.ReceiverPublicPath,
