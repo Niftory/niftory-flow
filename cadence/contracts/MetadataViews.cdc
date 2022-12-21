@@ -14,13 +14,9 @@ pub contract MetadataViews {
   }
 
   pub struct Display {
-
     pub let name: String
-
     pub let description: String
-
     pub let thumbnail: AnyStruct{File}
-
     init(
       name: String,
       description: String,
@@ -96,13 +92,9 @@ pub contract MetadataViews {
   }
 
   pub struct Edition {
-
     pub let name: String?
-
     pub let number: UInt64
-
     pub let max: UInt64?
-
     init(name: String?, number: UInt64, max: UInt64?) {
       if max != nil {
         assert(number <= max!, message: "The number cannot be greater than the max number!")
@@ -136,7 +128,7 @@ pub contract MetadataViews {
   *  Defines the composable royalty standard that gives marketplaces a unified interface
   *  to support NFT royalties.
   *
-  *  Marketplaces can query this `Royalties` struct from NFTs 
+  *  Marketplaces can query this `Royalties` struct from NFTs
   *  and are expected to pay royalties based on these specifications.
   *
   */

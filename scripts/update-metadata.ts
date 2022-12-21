@@ -204,78 +204,7 @@ const authorizationFunction =
     }
   }
 
-// struct based on the above sample transaction args
-type UpdateParams = {
-  registryAddress: string
-  brand: string
-  // Display
-  nftNameFields: string[]
-  nftDefaultName: string
-  nftDescriptionFields: string[]
-  nftDefaultDescription: string
-  nftImageFields: string[]
-  nftDefaultImagePrefix: string
-  nftDefaultImage: string
-  // Collection Display
-  colNameFields: string[]
-  colDefaultName: string
-  colDescriptionFields: string[]
-  colDefaultDescription: string
-  colExternalUrlFields: string[]
-  colDefaultExternalURLPrefix: string
-  colDefaultExternalURL: string
-  colSquareImageFields: string[]
-  colDefaultSquareImagePrefix: string
-  colDefaultSquareImage: string
-  colSquareImageMediaTypeField: string
-  colDefaultSquareImageMediaType: string
-  colBannerImageFields: string[]
-  colDefaultBannerImagePrefix: string
-  colDefaultBannerImage: string
-  colBannerImageMediaTypeField: string
-  colDefaultBannerImageMediaType: string
-  colSocialsFields: string[]
-  // ipfs gateway
-  ipfsGateway: string
-}
-
-const getArgs = (params: UpdateParams) => {
-  return (arg: any, t: any) => [
-    arg(params.registryAddress, t.Address),
-    arg(params.brand, t.String),
-    // Display
-    arg(params.nftNameFields, t.Array(t.String)),
-    arg(params.nftDefaultName, t.String),
-    arg(params.nftDescriptionFields, t.Array(t.String)),
-    arg(params.nftDefaultDescription, t.String),
-    arg(params.nftImageFields, t.Array(t.String)),
-    arg(params.nftDefaultImagePrefix, t.String),
-    arg(params.nftDefaultImage, t.String),
-    // Collection Display
-    arg(params.colNameFields, t.Array(t.String)),
-    arg(params.colDefaultName, t.String),
-    arg(params.colDescriptionFields, t.Array(t.String)),
-    arg(params.colDefaultDescription, t.String),
-    arg(params.colExternalUrlFields, t.Array(t.String)),
-    arg(params.colDefaultExternalURLPrefix, t.String),
-    arg(params.colDefaultExternalURL, t.String),
-    arg(params.colSquareImageFields, t.Array(t.String)),
-    arg(params.colDefaultSquareImagePrefix, t.String),
-    arg(params.colDefaultSquareImage, t.String),
-    arg(params.colSquareImageMediaTypeField, t.String),
-    arg(params.colDefaultSquareImageMediaType, t.String),
-    arg(params.colBannerImageFields, t.Array(t.String)),
-    arg(params.colDefaultBannerImagePrefix, t.String),
-    arg(params.colDefaultBannerImage, t.String),
-    arg(params.colBannerImageMediaTypeField, t.String),
-    arg(params.colDefaultBannerImageMediaType, t.String),
-    arg(params.colSocialsFields, t.Array(t.String)),
-    // ipfs gateway
-    arg(params.ipfsGateway, t.String),
-  ]
-}
-
-const getArgs2 = (
+const getArgs = (
   registryAddress: string,
   brand: string,
   ipfsGateway: String,
@@ -287,35 +216,38 @@ const getArgs2 = (
   ]
 }
 
-const NETWORK = 'testnet'
-const ACCESS_NODE = 'https://rest-testnet.onflow.org'
-
-const TX_FILE =
-  'cadence/transactions/metadata_views_manager_admin/update_resolvers.cdc'
+const NETWORK = 'mainnet'
+// const ACCESS_NODE = 'https://rest-testnet.onflow.org'
+const ACCESS_NODE = 'https://rest-mainnet.onflow.org'
 
 /*
-Niftory Dapper Testnet
-clb5dp67p00060glbtbha82gz_NiftoryDapperTestnet
-0xbf1d44227043c06c
+Niftory Dapper Sample
+clacupltt00040hjkt5tidz25_NiftoryDapperSample
+0xbabb26e959d6e018
 */
 
-const REGISTRY = ''
-const BRAND = ''
+const TX_FILE =
+  'cadence/transactions/metadata_views_manager_admin/update_gamisodes.cdc'
 
-const ADDRESS = ''
+const REGISTRY = '0x32d62d5c43ad1038'
+const BRAND = 'cl9bquwn300010hkzt0td7pec_Gamisodes'
+
+const ADDRESS = '0x09e04bdbcccde6ca'
 const KEY_ID = '0'
+
+const KMS_ID = '524fd40e-23f7-41ab-8a2b-39ad8bdb5531'
 
 const main = async () => {
   configureFcl({ network: NETWORK, accessNode: ACCESS_NODE })
   const { getContractAddress, getVariable } = parseConfig()(NETWORK)
   const code = getTransactionCode(TX_FILE, getContractAddress)
   const signer = getKmsSigner({
-    keyId: '',
+    keyId: KMS_ID,
     region: AWS_REGION,
     accessKeyId: AWS_ACCESS_KEY_ID,
     secretAccessKey: AWS_SECRET_ACCESS_KEY,
   })
-  const args = getArgs2(REGISTRY, BRAND, 'https://cloudflare-ipfs.com/ipfs/')
+  const args = getArgs(REGISTRY, BRAND, 'https://cloudflare-ipfs.com/ipfs/')
   const authFunction = authorizationFunction(ADDRESS, KEY_ID, signer)
 
   const transactionId = await fcl.mutate({

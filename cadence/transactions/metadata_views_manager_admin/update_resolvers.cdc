@@ -89,10 +89,10 @@ transaction(
         ipfsGateway,
       )
       self.nftManager.setMetadataViewsResolver(newNftCollectionDisplayResolver)
-
-      // Serial
-      let newSerialResolver = NiftoryMetadataViewsResolvers.SerialResolver()
-      self.nftManager.setMetadataViewsResolver(newSerialResolver)
     }
+
+    // Serial
+    let newSerialResolver = NiftoryMetadataViewsResolvers.SerialResolver()
+    self.nftManager.setMetadataViewsResolver(newSerialResolver)
   }
 }

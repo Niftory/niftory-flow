@@ -1,3 +1,5 @@
+import MetadataViews from "../../contracts/MetadataViews.cdc"
+
 import NiftoryNonFungibleToken from "../../contracts/NiftoryNonFungibleToken.cdc"
 import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 
@@ -8,7 +10,8 @@ pub struct NFTInfo {
   pub let templateId: Int
   pub let metadata: AnyStruct
   pub let setMetadata: AnyStruct
-  pub let views: [Type]
+  pub let viewTypes: [Type]
+  pub let views: [AnyStruct?]
   init(
     id: UInt64,
     serial: UInt64,
@@ -16,7 +19,8 @@ pub struct NFTInfo {
     templateId: Int,
     metadata: AnyStruct,
     setMetadata: AnyStruct,
-    views: [Type]
+    viewTypes: [Type],
+    views: [AnyStruct?]
   ) {
     self.id = id
     self.serial = serial
@@ -24,6 +28,7 @@ pub struct NFTInfo {
     self.templateId = templateId
     self.metadata = metadata
     self.setMetadata = setMetadata
+    self.viewTypes = viewTypes
     self.views = views
   }
 }
@@ -39,6 +44,16 @@ pub fun main(
     .getCapability(paths.public)
     .borrow<&{NiftoryNonFungibleToken.CollectionPublic}>()!
   let nft = collection.borrow(id: nftId)
+  let viewTypes = nft.getViews()
+  let views: [AnyStruct?] = []
+  let nftCollectionDataType = Type<MetadataViews.NFTCollectionData>()
+
+  for viewType in viewTypes {
+    if viewType != nftCollectionDataType {
+      let view = nft.resolveView(viewType)
+      views.append(view)
+    }
+  }
   return NFTInfo(
     id: nft.id,
     serial: nft.serial,
@@ -46,7 +61,7 @@ pub fun main(
     templateId: nft.templateId,
     metadata: nft.metadata().get(),
     setMetadata: nft.set().metadata().get(),
-    views: nft.getViews()
+    viewTypes: nft.getViews(),
+    views: views
   )
 }
- 
