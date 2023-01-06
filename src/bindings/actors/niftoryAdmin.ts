@@ -1,4 +1,4 @@
-import { AnyActor } from '../../sdk/actor'
+import { AnyActor } from '../../sdk2/actor'
 import { context } from '../../utils'
 
 class NiftoryRegistryAdmin extends AnyActor<{}, NiftoryRegistryAdmin> {

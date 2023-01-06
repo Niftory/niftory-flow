@@ -186,7 +186,6 @@ pub contract NiftoryMetadataViewsResolvers {
       )
 
       // name
-      // iterate through nameFields until we have one that exists in metadata
       let name = NiftoryMetadataViewsResolvers._firstValueOrElse(
         metadata: &metadata as &{String: String},
         fields: self.nameFields,
@@ -194,7 +193,6 @@ pub contract NiftoryMetadataViewsResolvers {
       )
 
       // description
-      // do the same for descriptionFields
       let description = NiftoryMetadataViewsResolvers._firstValueOrElse(
         metadata: &metadata as &{String: String},
         fields: self.descriptionFields,
@@ -831,7 +829,9 @@ pub contract NiftoryMetadataViewsResolvers {
   ): String {
     for field in fields {
       if let value = metadata[field] {
-        return value
+        if value != "" {
+          return value
+        }
       }
     }
     return default

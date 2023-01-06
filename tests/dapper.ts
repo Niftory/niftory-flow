@@ -1,6 +1,6 @@
 import { emulator, init } from 'flow-js-testing'
 import * as path from 'path'
-import * as sdk from '../src/sdk'
+import * as sdk from '../src/sdk2'
 import {
   checkContextAlive,
   checkSuccessfulTransactions,

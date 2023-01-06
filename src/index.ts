@@ -1,35 +1,82 @@
-const someFunction = (value: number) => {
-  if (value <= 0) throw new Error('yo')
-  someFunction(value - 1)
-}
+import * as Emulator from './testing/emulator'
 
-var j = 0
+Emulator.run({ basePath: 'src', port: 3569, logging: true }, async () => {
+  /*
+  client: Client
 
-const someFunctionForLoop = (value: number) => {
-  for (let i = 0; i < value; i++) {
-    j = j + 1
-  }
-}
+  client.account
+    AccountRequest => AccountResponse | Error
+  client.block
+    BlockRequest => BlockRes
+  client.query
+    QueryRequest => QueryResponse | Error
+  client.mutate
+    TransactionRequest => TransactionResponse | Error
+  client.send
+    TransactionRequest => TransactionVoucher | Error
+  client.check
+    TransactionVoucher =>
 
-const someFunctionPromise = async (value: number): Promise<number> => {
-  if (value <= 0) throw new Error('yo')
-  return Promise.resolve().then(() => {
-    j = j + 1
-    return someFunctionPromise(value - 1)
+  root: Actor
+
+  signer = Signer.inMemory({
+    privateKey:
+    hashingAlgorithm:
+    signingAlgorithm:
   })
-}
 
-const someFunctionForLoopAsync = async (value: number) => {
-  for (let i = 0; i < value; i++) {
-    await Promise.resolve().then(() => {
-      j = j + 1
-    })
-  }
-}
+  Signer
+    .inMemory
+    .aws
+    .gcp
+    .azure
 
-// someFunctionForLoop(2_000_000_000)
-// someFunctionForLoopAsync(100_000_000)
-someFunctionPromise(10_000_000)
-// someFunction(10)
+  actor = Actor.simple({
+    client,
+    signer,
+  })
 
-console.log(j)
+  Actor
+    .simple
+    .full
+
+  actor.
+    .mutate({script, args, limit})
+    .mutate({})
+    .execute()
+
+  brandManager = actor.connect(sdk)
+
+  brandManager
+    .mint()
+    .execute()
+
+  Response =
+    Pending
+      {
+        _tag: "pending"
+        status: Status
+      }
+    Success
+      {
+        _tag: "success",
+        response: {
+          events: Event[]
+        }
+      }
+    Failure
+      {
+        _tag: "error"
+        error:
+          {
+            _tag: "server"
+            message: string
+          }
+          {
+            _tag: "cadence"
+            code: number
+            message: string
+          }
+      }
+  */
+})

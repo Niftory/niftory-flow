@@ -3,12 +3,18 @@ import * as emulator from './emulator'
 
 // Premade emulator accounts
 const EMULATOR_ACCOUNTS = {
+  // FlowServiceAccount, used for XXX
+  // FlowStorageFees, used for XXX
   service: '0xf8d6e0586b0a20c7',
+
+  // FungibleToken, the standard FungibleToken contract
   coreContracts: '0xee82856bf20e2aa6',
+
+  // FlowToken, the primary currency of the Flow blockchain
   mintContracts: '0x0ae53cb6e3f42a79',
 }
 
-// Public key to be used for all tests
+// Keys to be used for all tests
 const EMULATOR_CREDENTIALS = {
   privateKey:
     '418acca4607d4a220009623d5d4f392b0e1511a3cca422cbd54ae817a0f65f69',
@@ -27,10 +33,6 @@ const TEST_ACCOUNTS = {
   niftoryAdmin: 'NIFTORY_ADMIN',
   brandA: 'BRAND_A',
   brandB: 'BRAND_B',
-  brandAContractA: 'BRAND_A_CONTRACT_A',
-  brandAContractB: 'BRAND_A_CONTRACT_B',
-  brandBContractA: 'BRAND_B_CONTRACT_A',
-  brandBContractB: 'BRAND_B_CONTRACT_B',
   collectorA: 'COLLECTOR_A',
   collectorB: 'COLLECTOR_B',
 }
