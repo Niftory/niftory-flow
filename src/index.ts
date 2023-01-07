@@ -2,30 +2,32 @@ import * as Emulator from './testing/emulator'
 
 Emulator.run({ basePath: 'src', port: 3569, logging: true }, async () => {
   /*
-  client: Client
+  INPUTS:
+    client: Client
+    root: Actor
 
   client.account
-    AccountRequest => AccountResponse | Error
+    AccountRequest => Promise<AccountResponse | Error>
   client.block
-    BlockRequest => BlockRes
+    BlockRequest => Promise<BlockResponse | Error>
   client.query
-    QueryRequest => QueryResponse | Error
+    QueryRequest => Promise<QueryResponse | Error>
   client.mutate
-    TransactionRequest => TransactionResponse | Error
+    TransactionRequest => Promise<TransactionResponse | Error>
   client.send
-    TransactionRequest => TransactionVoucher | Error
+    TransactionRequest => Promise<TransactionVoucher | Error>
   client.check
-    TransactionVoucher =>
+    TransactionVoucher => Promise<TransactionResponse | Error>
 
   root: Actor
 
-  signer = Signer.inMemory({
+  signer = Auth.inMemory({
     privateKey:
     hashingAlgorithm:
     signingAlgorithm:
   })
 
-  Signer
+  Auth
     .inMemory
     .aws
     .gcp
