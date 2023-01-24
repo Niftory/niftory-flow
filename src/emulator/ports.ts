@@ -57,5 +57,9 @@ const updatePorts = (
   return [ports, ready]
 }
 
-export { updatePorts }
+const Ports = {
+  updatePorts,
+}
+
+export { Ports }
 export type { EmulatorPorts }

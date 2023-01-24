@@ -21,4 +21,7 @@ const parseLines = (data: any): string[] => {
   return lines
 }
 
-export { parseLines }
+const Parser = {
+  parseLines,
+}
+export { Parser }

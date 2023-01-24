@@ -230,12 +230,12 @@ const TX_FILE =
   'cadence/transactions/metadata_views_manager_admin/update_gamisodes.cdc'
 
 const REGISTRY = '0x32d62d5c43ad1038'
-const BRAND = 'cl9bquwn300010hkzt0td7pec_Gamisodes'
+const BRAND = ''
 
 const ADDRESS = '0x09e04bdbcccde6ca'
 const KEY_ID = '0'
 
-const KMS_ID = '524fd40e-23f7-41ab-8a2b-39ad8bdb5531'
+const KMS_ID = ''
 
 const main = async () => {
   configureFcl({ network: NETWORK, accessNode: ACCESS_NODE })

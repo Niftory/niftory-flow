@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
-import { parseLines } from './parser'
-import { EmulatorPorts, updatePorts } from './ports'
+import { Parser } from './parser'
+import { EmulatorPorts, Ports } from './ports'
 
 const FLOW_COMMAND = 'flow'
 const EMULATOR_ACTION = 'emulator'
@@ -31,11 +31,11 @@ const run = async (
   //   - Capture any accounts created
   //   - Capture any contracts deployed
   flow.stdout.on('data', (data: any) => {
-    const lines: string[] = parseLines(data)
+    const lines: string[] = Parser.parseLines(data)
     for (const line of lines) {
       try {
         const json = JSON.parse(line)
-        if (!ready) [ports, ready] = updatePorts(json, ports)
+        if (!ready) [ports, ready] = Ports.updatePorts(json, ports)
       } catch (e) {
         console.error(
           `Unable to parse emulator log. Skipping.\n` +

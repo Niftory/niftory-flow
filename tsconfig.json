@@ -6,9 +6,6 @@
     "jsx": "react",
     "rootDir": ".",
     "baseUrl": "lib",
-    "paths": {
-      "@flowtation-device/*": ["*/dist"]
-    },
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,

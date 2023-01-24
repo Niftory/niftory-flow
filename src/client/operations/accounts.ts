@@ -1,0 +1,3 @@
+type GetBlockByHeightParams = {
+  height: number
+}

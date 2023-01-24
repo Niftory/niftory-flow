@@ -46,8 +46,11 @@
   },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.229.0",
+    "@effect/io": "^0.0.59",
     "@onflow/fcl": "^1.3.2",
     "ecdsa-sig-formatter": "^1.0.11",
+    "elliptic": "^6.5.4",
+    "fp-ts": "^2.13.1",
     "zod": "^3.20.2"
   }
 }
