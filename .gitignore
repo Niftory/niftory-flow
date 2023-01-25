@@ -46,3 +46,6 @@ kms-auth.json
 flowargs.local.json
 *_mainnet.cdc
 *_testnet.cdc
+
+# backup
+backup

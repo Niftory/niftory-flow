@@ -1,12 +1,12 @@
-import { z } from 'zod'
+import { z } from "zod"
 
-const trim0x = (s: string) => (s.startsWith('0x') ? s.slice(2) : s)
+const trim0x = (s: string) => (s.startsWith("0x") ? s.slice(2) : s)
 
 const AddressSansPrefix = z.string().transform(trim0x)
 
-const Base64 = z.string().transform((s) => Buffer.from(s, 'base64').toString())
+const Base64 = z.string().transform((s) => Buffer.from(s, "base64").toString())
 
-const Signature = z.string().transform((s) => Buffer.from(s, 'base64'))
+// const Signature = z.string().transform((s) => Buffer.from(s, "base64"))
 
 const Timestamp = z.string().transform((s) => new Date(s))
 
@@ -19,7 +19,7 @@ const Block = z
       timestamp: Timestamp,
     }),
   })
-  .transform((block) => block.header)
+  .transform((_) => _.header)
 
 const Blocks = z.array(Block)
 
@@ -29,10 +29,10 @@ const Key = z.object({
   index: z.string().transform(BigInt),
   public_key: AddressSansPrefix,
   signing_algorithm: z.union([
-    z.literal('ECDSA_P256'),
-    z.literal('ECDSA_secp256k1'),
+    z.literal("ECDSA_P256"),
+    z.literal("ECDSA_secp256k1"),
   ]),
-  hashing_algorithm: z.union([z.literal('SHA2_256'), z.literal('SHA3_256')]),
+  hashing_algorithm: z.union([z.literal("SHA2_256"), z.literal("SHA3_256")]),
   sequence_number: z.string().transform(BigInt),
   weight: z.string().transform(Number),
   revoked: z.boolean(),

@@ -1,12 +1,12 @@
 // These strings will show up in the emulator logs as
 // "Started <string> server on port <number>"
 const PORT_STRINGS = {
-  grpc: 'gRPC',
-  rest: 'REST API',
-  admin: 'admin',
+  grpc: "gRPC",
+  rest: "REST API",
+  admin: "admin",
 }
 
-type PortType = 'grpc' | 'rest' | 'admin'
+type PortType = "grpc" | "rest" | "admin"
 
 type Port = {
   type: PortType
@@ -24,13 +24,13 @@ const createPattern = (type: string) =>
   new RegExp(`Started ${type} server on port`)
 
 // Parse the emulator output to find the ports, if it is a port message
-const parsePort = (json: object): Port | undefined => {
+const parsePort = (json: any): Port | undefined => {
   try {
-    const message: string = json['msg']
-    for (const type of ['grpc', 'rest', 'admin'] as PortType[]) {
+    const message: string = json["msg"]
+    for (const type of ["grpc", "rest", "admin"] as PortType[]) {
       const pattern = createPattern(PORT_STRINGS[type])
       if (pattern.test(message)) {
-        const port: number = json['port']
+        const port: number = json["port"]
         return { type, number: port }
       }
     }

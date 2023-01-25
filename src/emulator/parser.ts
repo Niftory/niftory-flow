@@ -8,7 +8,7 @@ const parseLines = (data: any): string[] => {
   try {
     lines = data.toString().split(NEWLINE_REGEX)
     // We don't want the last line - it is likely blank.
-    if (lines[lines.length - 1] === '') {
+    if (lines[lines.length - 1] === "") {
       lines.pop()
     }
   } catch (e) {

@@ -6,18 +6,18 @@ import {
   TransactionRequest,
   TransactionResult,
   TransactionSuccess,
-} from './transaction'
+} from "./transaction"
 
 const elseUndefined = (arr: any[]) => (arr.length > 0 ? arr : undefined)
 
 type Alive = {
-  _tag: 'alive'
+  _tag: "alive"
   numSuccessfulTransactions: number
   successfulTransactions: TransactionSuccess[]
 }
 
 type Dead = {
-  _tag: 'dead'
+  _tag: "dead"
   numSuccessfulTransactions: number
   numFailedTransactions: number
   successfulTransactions: TransactionSuccess[]
@@ -28,7 +28,7 @@ type ActorContext = Dead | Alive
 
 const newContext = (): Promise<ActorContext> =>
   Promise.resolve({
-    _tag: 'alive',
+    _tag: "alive",
     numSuccessfulTransactions: 0,
     successfulTransactions: [],
   })
@@ -36,7 +36,7 @@ const newContext = (): Promise<ActorContext> =>
 const registerSuccess =
   (transaction: TransactionSuccess) =>
   (context: Alive): ActorContext => ({
-    _tag: 'alive',
+    _tag: "alive",
     numSuccessfulTransactions: context.numSuccessfulTransactions + 1,
     successfulTransactions: [...context.successfulTransactions, transaction],
   })
@@ -45,7 +45,7 @@ const registerFailure =
   (transaction: TransactionFailure) =>
   (context: Alive): ActorContext => ({
     ...context,
-    _tag: 'dead',
+    _tag: "dead",
     numFailedTransactions: 1,
     failedTransaction: transaction,
   })
@@ -53,7 +53,7 @@ const registerFailure =
 const registerTransaction = (
   transaction: TransactionResult,
 ): ((context: Alive) => ActorContext) =>
-  transaction._tag === 'success'
+  transaction._tag === "success"
     ? registerSuccess(transaction)
     : registerFailure(transaction)
 
@@ -68,7 +68,7 @@ const advanceContextWith =
   ) =>
   (transaction: Request) =>
   (context: ActorContext): Promise<ActorContext> =>
-    context._tag === 'alive'
+    context._tag === "alive"
       ? handler(transaction)
           .then(registerTransaction)
           .then((apply) => apply(context))

@@ -1,40 +1,57 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
-    "jsx": "react",
-    "rootDir": ".",
-    "baseUrl": "lib",
-    "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitReturns": true,
+    // Typescript source code rules
+    "lib": ["ESNext", "DOM"],
+    "noLib": false,
+    "allowUnreachableCode": false,
+    "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
-    "removeComments": true,
-    "composite": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "strict": true,
+    "experimentalDecorators": true,
+
+    // Import rules
+    "baseUrl": "./",
+    "moduleResolution": "Node",
+    "paths": {
+      "#": ["src/index"],
+      "#/*": ["src/*"]
+    },
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "preserveSymlinks": true,
+    "skipLibCheck": true,
+
+    // What is generated during build
+    "module": "commonjs",
+    "target": "ES6",
+    "moduleDetection": "force",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "esModuleInterop": true,
-    "incremental": true,
-    "resolveJsonModule": true,
+    "noEmitOnError": true,
+
+    // Additional Emit options
+    "newLine": "LF",
+    "removeComments": false,
+    "stripInternal": true,
+    "isolatedModules": false,
+    "emitDecoratorMetadata": true,
+    "jsx": "preserve",
+
+    // JavaScript support
     "allowJs": true,
-    "noImplicitAny": false
+    "checkJs": false
   },
-  "include": ["src", "tests", "scripts"],
-  "exclude": [
-    "**/.cookiecutter/**",
-    "**/node_modules",
-    "**/next.config.js",
-    "**/commitlint.config.js",
-    "**/jest.config.js",
-    "**/dist",
-    "coverage"
-  ],
-  "ts-node": {
-    "transpileOnly": true,
-    "transpiler": "ts-node/transpilers/swc-experimental",
-    "require": ["tsconfig-paths/register"]
-  }
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+  "exclude": ["dist", "node_modules", "backup", "coverage"]
 }

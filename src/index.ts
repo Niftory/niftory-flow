@@ -1,12 +1,16 @@
 // Supposedly, import order matters here. Keep the extra spaces so linter
 // doesn't complain
 
-import { Util } from './util'
+import { flow, pipe } from "fp-ts/lib/function"
 
-import { Crypto } from './crypto'
+import { z } from "zod"
 
-import { Auth } from './auth'
+import { Util } from "./util"
 
-import { P } from './promise'
+import { Crypto } from "./crypto"
 
-export { Util, Crypto, Auth, P }
+import { Auth } from "./auth"
+
+import { Client } from "./client"
+
+export { Util, Crypto, Auth, Client, pipe, flow, z }

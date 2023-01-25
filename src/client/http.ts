@@ -1,7 +1,7 @@
-import { z } from 'zod'
+import { z } from "zod"
 
 namespace FlowHttp {
-  export type Method = 'GET' | 'POST'
+  export type Method = "GET" | "POST"
 
   export type Request<Params> = {
     method: Method
@@ -10,10 +10,10 @@ namespace FlowHttp {
   }
 
   const trimTrailingSlash = (baseUrl: string) =>
-    baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+    baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl
 
   const addLeadingSlash = (path: string) =>
-    path.startsWith('/') ? path : '/' + path
+    path.startsWith("/") ? path : "/" + path
 
   const sendRequest = <Params>(
     request: Request<Params>,
@@ -27,20 +27,22 @@ namespace FlowHttp {
       method: request.method,
       body: JSON.stringify(body),
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     }
+    console.log(url)
+    console.log(body)
     return fetch(url, options)
   }
 
   export type Failure = {
-    tag: 'failure'
+    tag: "failure"
     code: number
     message: string
   }
 
   export type Success<Body> = {
-    tag: 'success'
+    tag: "success"
     code: number
     message: string
     body: Body
@@ -65,7 +67,7 @@ namespace FlowHttp {
       response = await responsePromise
     } catch (error: any) {
       return {
-        tag: 'failure',
+        tag: "failure",
         code: -1,
         message: error.toString(),
       }
@@ -73,14 +75,14 @@ namespace FlowHttp {
     const body = await getResponseJson(response)
     if (response.ok)
       return {
-        tag: 'success',
+        tag: "success",
         code: response.status,
         message: response.statusText,
         body: parseBody(body),
       }
     const errorBody = parseErrorBody(body)
     return {
-      tag: 'failure',
+      tag: "failure",
       code: errorBody.success ? errorBody.data.code : response.status,
       message: errorBody.success ? errorBody.data.message : response.statusText,
     }
@@ -88,13 +90,13 @@ namespace FlowHttp {
 
   export type Handler<Params, Body> = (
     baseUrl: string,
-    params: Params,
-  ) => Promise<Response<Body>>
+  ) => (params: Params) => Promise<Response<Body>>
 
   export const createHandler =
     <Params>(request: Request<Params>) =>
-    <Body>(parseBody: (body: any) => Body) =>
-    (baseUrl: string, params: Params) => {
+    <Body>(parseBody: (body: any) => Body): Handler<Params, Body> =>
+    (baseUrl: string) =>
+    (params: Params) => {
       const responsePromise = sendRequest(request, baseUrl, params)
       return processResponse(responsePromise, parseBody)
     }

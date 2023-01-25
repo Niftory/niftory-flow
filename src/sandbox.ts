@@ -1,20 +1,16 @@
-import * as E from '@effect/io/Effect'
-import { flow } from 'fp-ts/lib/function'
-import { Auth, Util } from '.'
+import { Client } from "./client"
 
-const program = async () => {
-  const signBuffer = Auth.InMemory.fromAlias(
-    'hello',
-    'SHA2_256',
-    'ECDSA_P256',
-  ).sign
-  const sign = flow(
-    Util.Buffer.utf8ToBuffer,
-    signBuffer,
-    E.map(Util.Buffer.bufferToHex),
-    E.unsafeRunPromise,
-  )
-  console.log(await sign('hello'))
+const ACCOUNT = "7ec1f607f0872a9e"
+
+const main = async () => {
+  const client = Client.mainnet()
+  const account = await client.account({ address: ACCOUNT })
+  console.log(account)
+  console.log(account.body.keys)
+
+  const contracts = await client.contracts({ address: ACCOUNT })
+  console.log(contracts.body.balance)
+  console.log(Object.keys(contracts.body.contracts))
 }
 
-program()
+main()

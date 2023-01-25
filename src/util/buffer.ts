@@ -1,29 +1,21 @@
-import { pipe } from 'fp-ts/lib/function'
-import { z } from 'zod'
+// String conversions
+const toHex = (buffer: Buffer) => buffer.toString("hex")
 
-const HexString = z.string().regex(/^([0-9a-fA-F]{2})+$/)
-const Base64String = z
-  .string()
-  .regex(/^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/)
+const toBase64 = (buffer: Buffer) => buffer.toString("base64")
 
-const bufferToHex = (buffer: Buffer) => buffer.toString('hex')
-const hexToBuffer = (hex: string) =>
-  pipe(HexString.parse(hex), (parsed) => Buffer.from(parsed, 'hex'))
+const toUtf8 = (buffer: Buffer) => buffer.toString("utf8")
 
-const bufferToBase64 = (buffer: Buffer) => buffer.toString('base64')
-const base64ToBuffer = (base64: string) =>
-  pipe(Base64String.parse(base64), (parsed) => Buffer.from(parsed, 'base64'))
+// Numeric conversions
+const toNumber = (buffer: Buffer) => parseInt(buffer.toString("hex"), 16)
 
-const bufferToUtf8 = (buffer: Buffer) => buffer.toString('utf8')
-const utf8ToBuffer = (utf8: string) => Buffer.from(utf8, 'utf8')
+const toBigInt = (buffer: Buffer) => BigInt(buffer.toString("hex"))
 
 const BufferUtil = {
-  bufferToHex,
-  hexToBuffer,
-  bufferToBase64,
-  base64ToBuffer,
-  bufferToUtf8,
-  utf8ToBuffer,
+  toHex,
+  toBase64,
+  toUtf8,
+  toNumber,
+  toBigInt,
 }
 
 export { BufferUtil }

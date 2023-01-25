@@ -1,23 +1,26 @@
-import { flow, pipe } from 'fp-ts/lib/function'
-import { Crypto, Util } from '../..'
-import { HashAlgorithm, SignatureAlgorithm, Strategy } from '../strategy'
+import { flow, pipe } from "fp-ts/lib/function"
+import { Crypto, Util } from "../.."
+import { HashAlgorithm, SignatureAlgorithm, Strategy } from "../strategy"
 
-const createAlias = flow(Util.Buffer.utf8ToBuffer, Crypto.Hashers.sha2_256.hash)
+const createAlias = flow(
+  Util.String.fromUtf8ToBuffer,
+  Crypto.Hashers.sha2_256.hash,
+)
 
 const getHasher = (hashAlgorithm: HashAlgorithm) => {
   switch (hashAlgorithm) {
-    case 'SHA2_256':
+    case "SHA2_256":
       return Crypto.Hashers.sha2_256
-    case 'SHA3_256':
+    case "SHA3_256":
       return Crypto.Hashers.sha3_256
   }
 }
 
 const getSigner = (signatureAlgorithm: SignatureAlgorithm) => {
   switch (signatureAlgorithm) {
-    case 'ECDSA_P256':
+    case "ECDSA_P256":
       return Crypto.Elliptic.p256.signerFromPrivateKey
-    case 'ECDSA_secp256k1':
+    case "ECDSA_secp256k1":
       return Crypto.Elliptic.secp256k1.signerFromPrivateKey
   }
 }
