@@ -1,9 +1,9 @@
-import { spawn } from 'node:child_process'
-import { Parser } from './parser'
-import { EmulatorPorts, Ports } from './ports'
+import { spawn } from "node:child_process"
+import { Parser } from "./parser"
+import { EmulatorPorts, Ports } from "./ports"
 
-const FLOW_COMMAND = 'flow'
-const EMULATOR_ACTION = 'emulator'
+const FLOW_COMMAND = "flow"
+const EMULATOR_ACTION = "emulator"
 
 type EmulatorParams = {
   basePath: string
@@ -17,20 +17,13 @@ const run = async (
   { basePath, port, logging }: EmulatorParams,
   fn: () => Promise<void>,
 ): Promise<void> => {
-  const flow = spawn(FLOW_COMMAND, [EMULATOR_ACTION, '--log-format', 'json'])
+  const flow = spawn(FLOW_COMMAND, [EMULATOR_ACTION, "--log-format", "json"])
 
   var ports: EmulatorPorts = {}
   var ready = false
   var closed = false
 
-  // For every single line of emulator output, let's try to do the following
-  // things:
-  // - Parse the line as JSON
-  // - Parse any potential ports during startup
-  // - For each transaction
-  //   - Capture any accounts created
-  //   - Capture any contracts deployed
-  flow.stdout.on('data', (data: any) => {
+  flow.stdout.on("data", (data: any) => {
     const lines: string[] = Parser.parseLines(data)
     for (const line of lines) {
       try {
@@ -46,11 +39,11 @@ const run = async (
     }
   })
 
-  flow.stderr.on('data', (data: any) => {
+  flow.stderr.on("data", (data: any) => {
     console.error(`ERROR: ${data}`)
   })
 
-  flow.on('close', (code) => {
+  flow.on("close", (code) => {
     closed = true
   })
 
@@ -58,7 +51,7 @@ const run = async (
   var lastLog = Date.now()
   while (!ready) {
     if (Date.now() - lastLog > 5000) {
-      console.log('waiting for emulator to start')
+      console.log("waiting for emulator to start")
       lastLog = Date.now()
     }
     await sleep(100)
@@ -72,7 +65,7 @@ const run = async (
   lastLog = Date.now()
   while (!closed) {
     if (Date.now() - lastLog > 5000) {
-      console.log('waiting for emulator to close')
+      console.log("waiting for emulator to close")
       lastLog = Date.now()
     }
     await sleep(100)

@@ -10,26 +10,26 @@ const latest = FlowHttp.createHandler<GetLatestBlockParams>({
 })(Blocks.transform((blocks) => blocks[0]!).parse)
 
 type GetBlocksByHeightParams = {
-  heights: Util.Numeric[]
+  heights: Util.IntLike[]
 }
 
 const byHeight = FlowHttp.createHandler<GetBlocksByHeightParams>({
   method: "GET",
   path: (params) =>
-    `/v1/blocks?height=${params.heights.map(Util.Numeric.asString).join(",")}`,
+    `/v1/blocks?height=${params.heights.map(Util.IntLike.asString).join(",")}`,
 })(Blocks.parse)
 
 type GetBlocksBetweenHeightsParams = {
-  start: Util.Numeric
-  end: Util.Numeric
+  start: Util.IntLike
+  end: Util.IntLike
 }
 
 const betweenHeights = FlowHttp.createHandler<GetBlocksBetweenHeightsParams>({
   method: "GET",
   path: (params) =>
     `/v1/blocks` +
-    `?start_height=${Util.Numeric.asString(params.start)}` +
-    `&end_height=${Util.Numeric.asString(params.end)}`,
+    `?start_height=${Util.IntLike.asString(params.start)}` +
+    `&end_height=${Util.IntLike.asString(params.end)}`,
 })(Blocks.parse)
 
 type GetBlocksByIdParams = {

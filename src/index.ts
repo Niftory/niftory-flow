@@ -13,4 +13,6 @@ import { Auth } from "./auth"
 
 import { Client } from "./client"
 
-export { Util, Crypto, Auth, Client, pipe, flow, z }
+import { Codec } from "./types"
+
+export { Util, Crypto, Auth, Client, Codec, pipe, flow, z }

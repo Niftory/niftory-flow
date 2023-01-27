@@ -1,9 +1,16 @@
-import { Elliptic } from './elliptic'
-import { Hashers } from './hashers'
+import {
+  Elliptic as Elliptic_,
+  EllipticAlgorithm,
+  Signer as Signer_,
+} from "./elliptic"
+import { Hasher as Hasher_, Hashers as Hashers_ } from "./hashers"
 
-const Crypto = {
-  Hashers,
-  Elliptic,
+namespace Crypto {
+  export const Hashers = Hashers_
+  export const Elliptic = Elliptic_
+  export type Elliptic = EllipticAlgorithm
+  export type Hasher = Hasher_
+  export type Signer = Signer_
 }
 
 export { Crypto }

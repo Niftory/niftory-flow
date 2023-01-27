@@ -76,5 +76,5 @@ const Elliptic = {
   p256,
 }
 
-export type { EllipticAlgorithm }
+export type { EllipticAlgorithm, Signer }
 export { Elliptic }

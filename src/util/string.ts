@@ -6,6 +6,9 @@ const parser =
   (str: string) =>
     genericParse(str)
 
+const AnyString = z.string()
+const parseAny = AnyString.parse
+
 const DecimalString = z.string().regex(/^([0-9]+)$/)
 const parseDecimal = parser(DecimalString.parse)
 
@@ -18,10 +21,26 @@ const Base64String = z
 const parseBase64 = parser(Base64String.parse)
 
 // String replacements
-const trimTrailingSlash = (str: string) =>
-  str.endsWith("/") ? str.slice(0, -1) : str
+const trimTrailing = (trailing: string) => (str: string) =>
+  str.endsWith(trailing) ? str.slice(0, -trailing.length) : str
 
-const addLeadingSlash = (str: string) => (str.startsWith("/") ? str : "/" + str)
+const trimLeading = (leading: string) => (str: string) =>
+  str.startsWith(leading) ? str.slice(leading.length) : str
+
+const prependLeading = (leading: string, allow?: string[]) => (str: string) => {
+  const toCheck = (allow ?? []).concat(leading)
+  return toCheck.some(str.startsWith) ? str : leading + str
+}
+
+const appendTrailing =
+  (trailing: string, allow?: string[]) => (str: string) => {
+    const toCheck = (allow ?? []).concat(trailing)
+    return toCheck.some(str.endsWith) ? str : str + trailing
+  }
+
+const trimTrailingSlash = trimTrailing("/")
+
+const addLeadingSlash = prependLeading("/")
 
 const replaceAll = (search: string, replace: string) => (str: string) =>
   str.split(search).join(replace)
@@ -29,7 +48,7 @@ const replaceAll = (search: string, replace: string) => (str: string) =>
 const replaceAllRegex = (search: RegExp, replace: string) => (str: string) =>
   str.replace(search, replace)
 
-// Numeric conversions
+// IntLike conversions
 const toBigInt = flow(parseDecimal, DecimalString.parse, BigInt)
 
 const toNumber = flow(toBigInt, Number)
@@ -43,10 +62,15 @@ const fromBase64ToBuffer = (base64: string) =>
 const fromUtf8ToBuffer = (utf8: string) => Buffer.from(utf8, "utf8")
 
 const StringUtil = {
+  trimLeading,
+  trimTrailing,
+  prependLeading,
+  appendTrailing,
   trimTrailingSlash,
   addLeadingSlash,
   replaceAll,
   replaceAllRegex,
+  parseAny,
   parseDecimal,
   parseBase64,
   parseHex,

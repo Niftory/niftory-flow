@@ -2,6 +2,7 @@ import { FLOW_REST_ENDPOINT_DEFAULTS } from "./defaults"
 import { FlowHttp } from "./http"
 import { AccountOps } from "./operations/accounts"
 import { BlockOps } from "./operations/blocks"
+import { ScriptOps } from "./operations/scripts"
 
 const assertSuccess = <Body>(
   response: FlowHttp.Response<Body>,
@@ -34,6 +35,7 @@ const create = (baseUrl: string) => {
     blocksBetweenHeights: wrap(BlockOps.betweenHeights),
     account: wrap(AccountOps.get),
     contracts: wrap(AccountOps.contracts),
+    query: wrap(ScriptOps.query),
   }
 }
 

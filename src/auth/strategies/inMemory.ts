@@ -27,22 +27,26 @@ const getSigner = (signatureAlgorithm: SignatureAlgorithm) => {
 
 const fromPrivateKey = (
   privateKey: Buffer,
-  hashAlgorithm: HashAlgorithm,
-  signatureAlgorithm: SignatureAlgorithm,
-): Strategy => {
-  const hash = getHasher(hashAlgorithm).hash
-  const sign = getSigner(signatureAlgorithm)(privateKey).sign
+  hashAlgorithm: HashAlgorithm = "SHA3_256",
+  signatureAlgorithm: SignatureAlgorithm = "ECDSA_P256",
+) => {
+  const hasher = getHasher(hashAlgorithm)
+  const signer = getSigner(signatureAlgorithm)(privateKey)
+  const strategy: Strategy = {
+    sign: (data) => Promise.resolve(pipe(data, hasher.hash, signer.sign)),
+  }
   return {
-    sign: (data) => Promise.resolve(pipe(data, hash, sign)),
+    hasher,
+    signer,
+    strategy,
   }
 }
 
 const fromAlias = (
   alias: string,
-  hashAlgorithm: HashAlgorithm,
-  signatureAlgorithm: SignatureAlgorithm,
-): Strategy =>
-  fromPrivateKey(createAlias(alias), hashAlgorithm, signatureAlgorithm)
+  hashAlgorithm: HashAlgorithm = "SHA3_256",
+  signatureAlgorithm: SignatureAlgorithm = "ECDSA_P256",
+) => fromPrivateKey(createAlias(alias), hashAlgorithm, signatureAlgorithm)
 
 const InMemory = {
   fromAlias,

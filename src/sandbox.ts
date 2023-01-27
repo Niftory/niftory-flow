@@ -1,99 +1,35 @@
-import { CadenceParser } from "@onflow/cadence-parser"
-import * as fcl from "@onflow/fcl"
-import { promises as fs } from "fs"
+import { Codec } from "#"
 
-const CODE_ONE = `
-import Blah from "./Blah.cdc"
+console.log(Codec.Bool.encode(true))
 
-pub struct Thing {
-  priv let a: UInt64
-  priv let b: UInt64
-  init() {
-    self.a = 1
-    self.b = 2
-  }
-}
+console.log(Codec.Optional(Codec.Optional(Codec.Bool)).encode(true))
 
-// Func
-pub fun main(thing: Thing): Blah.Foo {
-  return thing
-}
-`
+console.log(Codec.Optional(Codec.UInt128).encode(123))
 
-const CODE_TWO = `
-pub struct THING {}
-pub fun main(): FOO.THING.YO.BLAH {}
-`
+const t = Codec.Tuple([Codec.Bool, Codec.UInt128, Codec.Optional(Codec.String)])
 
-const CODE_THREE = `
-import FungibleToken from 0xee82856bf20e2aa6
+const encoded = JSON.stringify(t.encode([true, "3213", null]), null, 2)
+const decoded = t.decode(JSON.parse(encoded))
 
-pub fun main(): AnyStruct {
-  return Type<FungibleToken.Vault>()
-}
-`
+const a = Codec.Array(Codec.Array(Codec.Bool))
 
-const main = async () => {
-  fcl.config().put("accessNode.api", "http://127.0.0.1:8888")
+a.encode([
+  [true, false],
+  [true, false],
+])
 
-  const response = await fcl.query({
-    cadence: `
-      pub struct Thing {
-        priv let a: UInt64
-        priv let b: UInt64
-        init() {
-          self.a = 1
-          self.b = 2
-        }
-      }
+console.log(encoded)
+console.log(decoded)
 
-      pub fun main(thing: Thing): AnyStruct {
-        return thing
-      }
-    `,
-    args: (arg: any, t: any) => [
-      arg(
-        {
-          fields: [
-            { name: "a", value: "5" },
-            { name: "b", value: "6" },
-          ],
-        },
-        t.Struct(
-          "s.0450233b4f5b6c3c515d9288594891f6cea9c36edf3520e050aa1a455bf3bf77.Thing",
-          [
-            { name: "a", value: t.UInt64 },
-            { name: "b", value: t.UInt64 },
-          ],
-        ),
-      ),
-    ],
-  })
+const superExampleCodec = Codec.Tuple([
+  Codec.Bool,
+  Codec.UInt128,
+  Codec.Optional(Codec.Struct("Foo", { a: Codec.Bool, b: Codec.PrivatePath })),
+])
 
-  console.log(response)
-}
-
-const main3 = async () => {
-  const parserBinary = await fs.readFile("cadence-parser.wasm")
-  const parser = await CadenceParser.create(parserBinary)
-
-  const ast = parser.parse(CODE_TWO)
-
-  console.log(JSON.stringify(ast, null, 2))
-}
-
-main3()
-
-// import { Client } from "./client"
-// const ACCOUNT = "7ec1f607f0872a9e"
-
-// const main = async () => {
-//   const client = Client.mainnet()
-//   const account = await client.account({ address: ACCOUNT })
-//   console.log(account)
-//   console.log(account.body.keys)
-
-//   const contracts = await client.contracts({ address: ACCOUNT })
-//   console.log(contracts.body.balance)
-//   console.log(Object.keys(contracts.body.contracts))
-// }
+const encoded2 = superExampleCodec.encode([
+  true,
+  123,
+  { a: true, b: { domain: "private", identifier: "foo" } },
+])
+console.log(JSON.stringify(encoded2))
