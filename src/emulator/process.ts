@@ -1,36 +1,81 @@
-import { spawn } from "node:child_process"
+import { Client } from "#"
+import { ChildProcess, spawn } from "node:child_process"
+import {
+  buildCommand,
+  EmulatorParams,
+  getFullEmulatorParams,
+  RootAccount,
+} from "./params"
 import { Parser } from "./parser"
 import { EmulatorPorts, Ports } from "./ports"
 
 const FLOW_COMMAND = "flow"
-const EMULATOR_ACTION = "emulator"
 
-type EmulatorParams = {
-  basePath: string
-  port: number
-  logging: boolean
+type EmulatorProcessParams = {
+  startTimeoutMs: number
+  checkIntervalMs: number
+  stdout: (data: string) => Promise<void>
+  stderr: (data: string) => Promise<void>
+}
+
+const DEFAULT_STDOUT_HANDLER = (data: string) =>
+  new Promise<void>((resolve) => {
+    console.log(data)
+    resolve()
+  })
+
+const DEFAULT_STDERR_HANDLER = (data: string) =>
+  new Promise<void>((resolve) => {
+    console.error(data)
+    resolve()
+  })
+
+const EMULATOR_PROCESS_PARAM_DEFAULTS: EmulatorProcessParams = {
+  startTimeoutMs: 10000,
+  checkIntervalMs: 100,
+  stdout: DEFAULT_STDOUT_HANDLER,
+  stderr: DEFAULT_STDERR_HANDLER,
+}
+
+type EmulatorProcess = {
+  ports: EmulatorPorts
+  kill: () => Promise<void>
+  process: ChildProcess
+  client: ReturnType<typeof Client.create>
+  root: RootAccount
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-const run = async (
-  { basePath, port, logging }: EmulatorParams,
-  fn: () => Promise<void>,
-): Promise<void> => {
-  const flow = spawn(FLOW_COMMAND, [EMULATOR_ACTION, "--log-format", "json"])
+const create = async (
+  params: EmulatorParams,
+  options?: Partial<EmulatorProcessParams>,
+): Promise<EmulatorProcess> => {
+  const { startTimeoutMs, checkIntervalMs, stdout, stderr } = {
+    ...EMULATOR_PROCESS_PARAM_DEFAULTS,
+    ...options,
+  }
+  const flow = spawn(FLOW_COMMAND, buildCommand(params))
 
   var ports: EmulatorPorts = {}
   var ready = false
   var closed = false
 
-  flow.stdout.on("data", (data: any) => {
+  process.on("exit", () => {
+    if (!closed) {
+      flow.kill()
+    }
+  })
+
+  flow.stdout.on("data", async (data: any) => {
     const lines: string[] = Parser.parseLines(data)
     for (const line of lines) {
       try {
         const json = JSON.parse(line)
+        await stdout(line)
         if (!ready) [ports, ready] = Ports.updatePorts(json, ports)
       } catch (e) {
-        console.error(
+        stderr(
           `Unable to parse emulator log. Skipping.\n` +
             `Line: ${line}\n` +
             `Error: ${e}`,
@@ -40,41 +85,39 @@ const run = async (
   })
 
   flow.stderr.on("data", (data: any) => {
-    console.error(`ERROR: ${data}`)
+    stderr(`ERROR: ${data}`)
   })
 
   flow.on("close", (code) => {
     closed = true
   })
 
-  // Don't run anything until the emulator is ready (all ports are ready)
-  var lastLog = Date.now()
-  while (!ready) {
-    if (Date.now() - lastLog > 5000) {
-      console.log("waiting for emulator to start")
-      lastLog = Date.now()
-    }
-    await sleep(100)
+  const start = Date.now()
+  while (!ready && Date.now() - start < startTimeoutMs) {
+    await sleep(checkIntervalMs)
   }
 
-  // Run whatever the user wants to run
-  await fn()
-
-  // Close the emulator and wait for it to close
-  flow.kill()
-  lastLog = Date.now()
-  while (!closed) {
-    if (Date.now() - lastLog > 5000) {
-      console.log("waiting for emulator to close")
-      lastLog = Date.now()
-    }
-    await sleep(100)
+  if (!ready) {
+    flow.kill()
+    throw new Error("Emulator failed to start")
   }
 
-  // We are done!
-  console.log(ports)
-  console.log("Emulator closed. That's all folks!")
+  const kill = async () => {
+    flow.kill()
+    while (!closed) {
+      await sleep(100)
+    }
+  }
+
+  const client = Client.create("http://127.0.0.1:" + ports.rest!)
+
+  return {
+    ports,
+    kill,
+    process: flow,
+    client,
+    root: getFullEmulatorParams(params).root,
+  }
 }
 
-export { run }
-export type { EmulatorParams }
+export { create }

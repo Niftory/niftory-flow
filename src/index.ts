@@ -15,4 +15,6 @@ import { Client } from "./client"
 
 import { Codec } from "./types"
 
-export { Util, Crypto, Auth, Client, Codec, pipe, flow, z }
+import { Emulator } from "./emulator"
+
+export { Util, Crypto, Auth, Client, Codec, Emulator, pipe, flow, z }

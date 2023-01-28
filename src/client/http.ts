@@ -30,8 +30,6 @@ namespace FlowHttp {
         "Content-Type": "application/json",
       },
     }
-    console.log(url)
-    console.log(body)
     return fetch(url, options)
   }
 

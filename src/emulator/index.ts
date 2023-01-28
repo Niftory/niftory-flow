@@ -1,2 +1,7 @@
-export { run } from './process'
-export type { EmulatorParams } from './process'
+import { create } from "./process"
+
+const Emulator = {
+  create,
+}
+
+export { Emulator }
