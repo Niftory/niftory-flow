@@ -13,11 +13,6 @@ type Authorizer = Account & {
   signers: Signer[]
 }
 
-const createAuthorizer = (address: string, signers: Signer[]): Authorizer => ({
-  address,
-  signers,
-})
-
 type Payer = Authorizer
 
 type Proposer = Account &
@@ -29,6 +24,30 @@ type TransactionAuthority = {
   authorizers: Authorizer[]
   payer: Payer
   proposer: Proposer
+}
+
+const createAuthorizer = (address: string, signers: Signer[]): Authorizer => ({
+  address,
+  signers,
+})
+
+const createPayer = createAuthorizer
+
+const createProposer = (
+  address: string,
+  signer: Signer,
+  getSequenceNumber: () => Promise<Util.IntLike>,
+): Proposer => ({
+  address,
+  getKeyIndex: signer.getKeyIndex,
+  sign: signer.sign,
+  getSequenceNumber,
+})
+
+const AuthorityBuilders = {
+  createAuthorizer,
+  createPayer,
+  createProposer,
 }
 
 type Signature = {
@@ -68,7 +87,7 @@ const getPayloadSignaturesFor =
     return signatures
   }
 
-const getAuthorizationEnvelopeSignersFor =
+const getAuthorizationEnvelopeSignaturesFor =
   ({ payer }: TransactionAuthority) =>
   async (payload: Buffer): Promise<Signature[]> => {
     const signatures: Signature[] = []
@@ -93,4 +112,21 @@ const getProposalKey = async ({
   const keyIndex = await proposer.getKeyIndex()
   const sequenceNumber = await proposer.getSequenceNumber()
   return { address: proposer.address, keyIndex, sequenceNumber }
+}
+
+const AuthorityReducers = {
+  getPayloadSignaturesFor,
+  getAuthorizationEnvelopeSignaturesFor,
+  getPayerAddress,
+  getAuthorizerAddresses,
+  getProposalKey,
+}
+
+export {
+  AuthorityBuilders,
+  AuthorityReducers,
+  Authorizer,
+  Payer,
+  Proposer,
+  TransactionAuthority,
 }

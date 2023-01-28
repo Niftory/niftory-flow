@@ -59,7 +59,7 @@ const EmulatorDefaults = {
   grpcPort: 3569,
   httpPort: 8888,
   chainId: "emulator" as ChainId,
-  blockTime: "1us" as Duration,
+  blockTime: "1ms" as Duration,
   restDebug: false,
   grpcDebug: false,
   root: {
@@ -107,8 +107,9 @@ const formatEmulatorParams = (params: EmulatorParamsFull): string[] => [
   params.httpPort.toString(),
   "--chain-id",
   params.chainId,
-  "--block-time",
-  params.blockTime,
+  // TODO: The below option has some issues. Need to investigate.
+  // "--block-time",
+  // params.blockTime,
   ...(params.restDebug ? ["--rest-debug"] : []),
   ...(params.grpcDebug ? ["--grpc-debug"] : []),
   "--service-hash-algo",

@@ -1,6 +1,8 @@
 import { Emulator } from "./emulator"
 
 const main = async () => {
+  console.log(BigInt(101))
+
   const emulator = await Emulator.create({
     httpPort: 8081,
   })
@@ -24,7 +26,7 @@ const main = async () => {
 
   console.log(await client.contracts({ address: "0x0000000000000001" }))
 
-  emulator.kill()
+  await emulator.kill()
 }
 
 main()
