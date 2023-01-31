@@ -1,3 +1,4 @@
+import { Util } from "#"
 import { z } from "zod"
 
 namespace FlowHttp {
@@ -9,19 +10,14 @@ namespace FlowHttp {
     body?: (params: Params) => object
   }
 
-  const trimTrailingSlash = (baseUrl: string) =>
-    baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl
-
-  const addLeadingSlash = (path: string) =>
-    path.startsWith("/") ? path : "/" + path
-
   const sendRequest = <Params>(
     request: Request<Params>,
     baseUrl: string,
     params: Params,
   ) => {
     const url =
-      trimTrailingSlash(baseUrl) + addLeadingSlash(request.path(params))
+      Util.String.trimTrailing("/")(baseUrl) +
+      Util.String.prependLeading("/")(request.path(params))
     const body = request.body ? request.body(params) : undefined
     const options = {
       method: request.method,

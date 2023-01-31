@@ -33,7 +33,7 @@
 
     // What is generated during build
     "module": "commonjs",
-    "target": "ES6",
+    "target": "es2020",
     "moduleDetection": "force",
     "declaration": true,
     "declarationMap": true,
