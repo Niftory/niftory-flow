@@ -38,7 +38,7 @@ yarn-error.log*
 next-env.d.ts
 
 # vscode
-.vscode/
+# .vscode/
 
 # flow
 flow.prod.json
