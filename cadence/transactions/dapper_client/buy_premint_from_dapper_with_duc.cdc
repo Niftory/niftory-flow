@@ -2,8 +2,6 @@ import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 import MetadataViews from "../../contracts/MetadataViews.cdc"
 
-import DapperUtilityCoin from "../../contracts/DapperUtilityCoin.cdc"
-
 import NiftoryNonFungibleToken from "../../contracts/NiftoryNonFungibleToken.cdc"
 import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 import NiftoryNonFungibleTokenProxy
@@ -13,9 +11,7 @@ import NiftoryTemplate from "../../contracts/NiftoryTemplate.cdc"
 
 transaction(
   merchantAccountAddress: Address,
-  nftId: UInt64?,
-  setId: Int?,
-  templateId: Int?,
+  nftId: UInt64,
   price: UFix64
 ) {
 
@@ -27,10 +23,6 @@ transaction(
   let DAPPER_STORAGE_PATH: StoragePath
 
   // Niftory app assets
-  let nftManager:
-    &{NiftoryNonFungibleToken.ManagerPublic,
-      NiftoryNonFungibleToken.ManagerPrivate
-    }
   let nftProvider: Capability<&{
     NonFungibleToken.Provider,
     NonFungibleToken.CollectionPublic
@@ -58,17 +50,7 @@ transaction(
     self.FORWARDER_RECEIVER_PATH = /public/dapperUtilityCoinReceiver
     self.DAPPER_STORAGE_PATH = /storage/dapperUtilityCoinVault
 
-    // Get the NFT manager for the app
-    self.nftManager = niftoryApp
-      .getCapability<&{
-        NiftoryNonFungibleTokenProxy.Private,
-        NiftoryNonFungibleTokenProxy.Public
-      }>(
-        NiftoryNonFungibleTokenProxy.PRIVATE_PATH
-      ).borrow()!.access(
-        registryAddress: self.REGISTRY_ADDRESS,
-        brand: self.BRAND
-      )
+    // Get the NFT Collection Paths
     let appCollectionPaths = NiftoryNFTRegistry
       .getCollectionPaths(self.REGISTRY_ADDRESS, self.BRAND)
 
@@ -161,27 +143,15 @@ transaction(
 
     merchantAccountAddress == self.EXPECTED_MERCHANT_ACCOUNT_ADDRESS:
       "Merchant account address does not match expected address"
-
-    (nftId == nil && setId != nil && templateId != nil)
-      || (nftId != nil && setId == nil && templateId == nil)
-      : "Either nftId or (setId and templateId) must be provided"
   }
 
   execute {
 
     // Retrieve the NFT to give to the buyer
-    var nft: @NonFungibleToken.NFT? <- nil
-
-    if nftId != nil {
-      // If the nft has been pre-minted, withdraw it from the apps's collection
-      nft <-! self.nftProvider.borrow()!.withdraw(withdrawID: nftId!)
-    } else {
-      // Else, mint it from the nft manager
-      nft <-! self.nftManager.mint(setId: setId!, templateId: templateId!)
-    }
+    var nft <- self.nftProvider.borrow()!.withdraw(withdrawID: nftId)
 
     // Deposit the NFT into the buyer's collection
-    self.buyerCollection.deposit(token: <-nft!)
+    self.buyerCollection.deposit(token: <-nft)
 
     // Deposit the payment into the seller DUC forwarder
     self.niftoryAppPaymentReceiver.borrow()!.deposit(from: <-self.paymentVault)

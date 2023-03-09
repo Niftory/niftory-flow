@@ -13,9 +13,8 @@ import NiftoryTemplate from "../../contracts/NiftoryTemplate.cdc"
 
 transaction(
   merchantAccountAddress: Address,
-  nftId: UInt64?,
-  setId: Int?,
-  templateId: Int?,
+  setId: Int,
+  templateId: Int,
   price: UFix64
 ) {
 
@@ -31,10 +30,6 @@ transaction(
     &{NiftoryNonFungibleToken.ManagerPublic,
       NiftoryNonFungibleToken.ManagerPrivate
     }
-  let nftProvider: Capability<&{
-    NonFungibleToken.Provider,
-    NonFungibleToken.CollectionPublic
-  }>
   let niftoryAppPaymentReceiver: Capability<&{FungibleToken.Receiver}>
 
   // Dapper assets
@@ -69,14 +64,10 @@ transaction(
         registryAddress: self.REGISTRY_ADDRESS,
         brand: self.BRAND
       )
+
+    // Get the NFT Collection Paths
     let appCollectionPaths = NiftoryNFTRegistry
       .getCollectionPaths(self.REGISTRY_ADDRESS, self.BRAND)
-
-    // Get the NFT provider from the app storage account
-    self.nftProvider = niftoryApp.getCapability<&{
-      NonFungibleToken.Provider,
-      NonFungibleToken.CollectionPublic
-    }>(appCollectionPaths.private)
 
     // Get the DUC forwarder for the merchant account associated with this app
     let merchantAccount = getAccount(merchantAccountAddress)
@@ -161,27 +152,15 @@ transaction(
 
     merchantAccountAddress == self.EXPECTED_MERCHANT_ACCOUNT_ADDRESS:
       "Merchant account address does not match expected address"
-
-    (nftId == nil && setId != nil && templateId != nil)
-      || (nftId != nil && setId == nil && templateId == nil)
-      : "Either nftId or (setId and templateId) must be provided"
   }
 
   execute {
 
     // Retrieve the NFT to give to the buyer
-    var nft: @NonFungibleToken.NFT? <- nil
-
-    if nftId != nil {
-      // If the nft has been pre-minted, withdraw it from the apps's collection
-      nft <-! self.nftProvider.borrow()!.withdraw(withdrawID: nftId!)
-    } else {
-      // Else, mint it from the nft manager
-      nft <-! self.nftManager.mint(setId: setId!, templateId: templateId!)
-    }
+    var nft <- self.nftManager.mint(setId: setId, templateId: templateId)
 
     // Deposit the NFT into the buyer's collection
-    self.buyerCollection.deposit(token: <-nft!)
+    self.buyerCollection.deposit(token: <-nft)
 
     // Deposit the payment into the seller DUC forwarder
     self.niftoryAppPaymentReceiver.borrow()!.deposit(from: <-self.paymentVault)
