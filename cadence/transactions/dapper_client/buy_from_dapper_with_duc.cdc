@@ -2,8 +2,6 @@ import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 import MetadataViews from "../../contracts/MetadataViews.cdc"
 
-import DapperUtilityCoin from "../../contracts/DapperUtilityCoin.cdc"
-
 import NiftoryNonFungibleToken from "../../contracts/NiftoryNonFungibleToken.cdc"
 import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 import NiftoryNonFungibleTokenProxy
@@ -78,12 +76,12 @@ transaction(
       NonFungibleToken.CollectionPublic
     }>(appCollectionPaths.private)
 
-    // Get the DUC forwarder for the merchant account associated with this app
+    // Get the token forwarder for the merchant account associated with this app
     let merchantAccount = getAccount(merchantAccountAddress)
     self.niftoryAppPaymentReceiver = merchantAccount
       .getCapability<&{FungibleToken.Receiver}>(self.FORWARDER_RECEIVER_PATH)
 
-    // Withdraw the DUC payment from the Dapper vault
+    // Withdraw the token payment from the Dapper vault
     self.mainUtilityCoinVault = dapper.borrow<&FungibleToken.Vault>(
       from: self.DAPPER_STORAGE_PATH
     )
@@ -97,7 +95,9 @@ transaction(
     if buyer.borrow<&NonFungibleToken.Collection>(
       from: appCollectionPaths.storage
     ) == nil {
-      let collection <- NiftoryTemplate
+      let collection <- NiftoryNFTRegistry
+        .getNFTManagerPublic(self.REGISTRY_ADDRESS, self.BRAND)
+        .getNFTCollectionData()
         .createEmptyCollection()
       buyer.save(<-collection, to: appCollectionPaths.storage)
     }
@@ -163,7 +163,7 @@ transaction(
       "Merchant account address does not match expected address"
 
     (nftId == nil && setId != nil && templateId != nil)
-      || (nftId != nil && setId == nil && templateId == nil)
+      || (nftId != nil)
       : "Either nftId or (setId and templateId) must be provided"
   }
 
@@ -183,7 +183,7 @@ transaction(
     // Deposit the NFT into the buyer's collection
     self.buyerCollection.deposit(token: <-nft!)
 
-    // Deposit the payment into the seller DUC forwarder
+    // Deposit the payment into the seller token forwarder
     self.niftoryAppPaymentReceiver.borrow()!.deposit(from: <-self.paymentVault)
   }
 
