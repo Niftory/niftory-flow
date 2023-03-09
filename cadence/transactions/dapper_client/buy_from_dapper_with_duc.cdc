@@ -7,7 +7,12 @@ import NiftoryNFTRegistry from "../../contracts/NiftoryNFTRegistry.cdc"
 import NiftoryNonFungibleTokenProxy
   from "../../contracts/NiftoryNonFungibleTokenProxy.cdc"
 
-import NiftoryTemplate from "../../contracts/NiftoryTemplate.cdc"
+// Static params - change these to customize the transaction
+let EXPECTED_MERCHANT_ACCOUNT_ADDRESS: Address = 0x01
+let REGISTRY_ADDRESS: Address = 0x02
+let BRAND: String = "fdsa"
+let FORWARDER_RECEIVER_PATH: PublicPath = /public/dapperUtilityCoinReceiver
+let DAPPER_STORAGE_PATH: StoragePath = /storage/dapperUtilityCoinVault
 
 transaction(
   merchantAccountAddress: Address,
@@ -16,14 +21,6 @@ transaction(
   templateId: Int?,
   price: UFix64
 ) {
-
-  // Static params - change these to customize the transaction
-  let EXPECTED_MERCHANT_ACCOUNT_ADDRESS: Address
-  let REGISTRY_ADDRESS: Address
-  let BRAND: String
-  let FORWARDER_RECEIVER_PATH: PublicPath
-  let DAPPER_STORAGE_PATH: StoragePath
-
   // Niftory app assets
   let nftManager:
     &{NiftoryNonFungibleToken.ManagerPublic,
@@ -48,14 +45,6 @@ transaction(
     dapper: AuthAccount,
     buyer: AuthAccount
   ) {
-
-    // Params
-    self.EXPECTED_MERCHANT_ACCOUNT_ADDRESS = 0x1
-    self.REGISTRY_ADDRESS = 0x2
-    self.BRAND = "fdsa"
-    self.FORWARDER_RECEIVER_PATH = /public/dapperUtilityCoinReceiver
-    self.DAPPER_STORAGE_PATH = /storage/dapperUtilityCoinVault
-
     // Get the NFT manager for the app
     self.nftManager = niftoryApp
       .getCapability<&{
@@ -64,11 +53,11 @@ transaction(
       }>(
         NiftoryNonFungibleTokenProxy.PRIVATE_PATH
       ).borrow()!.access(
-        registryAddress: self.REGISTRY_ADDRESS,
-        brand: self.BRAND
+        registryAddress: REGISTRY_ADDRESS,
+        brand: BRAND
       )
     let appCollectionPaths = NiftoryNFTRegistry
-      .getCollectionPaths(self.REGISTRY_ADDRESS, self.BRAND)
+      .getCollectionPaths(REGISTRY_ADDRESS, BRAND)
 
     // Get the NFT provider from the app storage account
     self.nftProvider = niftoryApp.getCapability<&{
@@ -79,11 +68,11 @@ transaction(
     // Get the token forwarder for the merchant account associated with this app
     let merchantAccount = getAccount(merchantAccountAddress)
     self.niftoryAppPaymentReceiver = merchantAccount
-      .getCapability<&{FungibleToken.Receiver}>(self.FORWARDER_RECEIVER_PATH)
+      .getCapability<&{FungibleToken.Receiver}>(FORWARDER_RECEIVER_PATH)
 
     // Withdraw the token payment from the Dapper vault
     self.mainUtilityCoinVault = dapper.borrow<&FungibleToken.Vault>(
-      from: self.DAPPER_STORAGE_PATH
+      from: DAPPER_STORAGE_PATH
     )
       ?? panic("Cannot borrow UtilityCoin vault from account storage")
     self.balanceBeforeTransfer = self.mainUtilityCoinVault.balance
@@ -96,7 +85,7 @@ transaction(
       from: appCollectionPaths.storage
     ) == nil {
       let collection <- NiftoryNFTRegistry
-        .getNFTManagerPublic(self.REGISTRY_ADDRESS, self.BRAND)
+        .getNFTManagerPublic(REGISTRY_ADDRESS, BRAND)
         .getNFTCollectionData()
         .createEmptyCollection()
       buyer.save(<-collection, to: appCollectionPaths.storage)
@@ -159,7 +148,7 @@ transaction(
     self.niftoryAppPaymentReceiver.check()
       : "Missing or mis-typed UtilityCoin receiver"
 
-    merchantAccountAddress == self.EXPECTED_MERCHANT_ACCOUNT_ADDRESS:
+    merchantAccountAddress == EXPECTED_MERCHANT_ACCOUNT_ADDRESS:
       "Merchant account address does not match expected address"
 
     (nftId == nil && setId != nil && templateId != nil)
