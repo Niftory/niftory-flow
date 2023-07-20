@@ -10,6 +10,7 @@ contract functions, please see the Niftory and NFTRegistry contracts.
 
 import NonFungibleToken from "./NonFungibleToken.cdc"
 import MetadataViews from "./MetadataViews.cdc"
+import ViewResolver from "./ViewResolver.cdc"
 
 import MutableMetadata from "./MutableMetadata.cdc"
 import MutableMetadataTemplate from "./MutableMetadataTemplate.cdc"
@@ -20,7 +21,10 @@ import MetadataViewsManager from "./MetadataViewsManager.cdc"
 import NiftoryNonFungibleToken from "./NiftoryNonFungibleToken.cdc"
 import NiftoryNFTRegistry from "./NiftoryNFTRegistry.cdc"
 
-pub contract NiftoryTemplate: NonFungibleToken {
+import NiftoryMetadataViewsResolvers from "./NiftoryMetadataViewsResolvers.cdc"
+import NiftoryNonFungibleTokenProxy from "./NiftoryNonFungibleTokenProxy.cdc"
+
+pub contract NiftoryTemplate: NonFungibleToken, ViewResolver {
 
   // ========================================================================
   // Constants
@@ -31,10 +35,10 @@ pub contract NiftoryTemplate: NonFungibleToken {
   pub let COLLECTION_PUBLIC_PATH: PublicPath
   pub let COLLECTION_STORAGE_PATH: StoragePath
 
-  // Suggested paths where nft manager could be stored
-  pub let NFT_MANAGER_PRIVATE_PATH: PrivatePath
-  pub let NFT_MANAGER_PUBLIC_PATH: PublicPath
-  pub let NFT_MANAGER_STORAGE_PATH: StoragePath
+  // Accessor token to be used with NiftoryNFTRegistry to retrieve
+  // meta-information about this NFT project
+  pub let REGISTRY_ADDRESS: Address
+  pub let REGISTRY_BRAND: String
 
   // ========================================================================
   // Attributes
@@ -102,16 +106,7 @@ pub contract NiftoryTemplate: NonFungibleToken {
   pub event TemplateMaxMintSet(setId: Int, templateId: Int, maxMint: UInt64)
 
   // Template `templateId` of Set `setId` has minted NFT with serial `serial`
-  pub event NFTMinted(setId: Int, templateId: Int, serial: UInt64)
-
-  // Template `templateId` of Set `setId` has minted multiple NFTs of serials
-  // from 'fromSerial' to (and including) 'toSerial'
-  pub event NFTMintedBulk(
-    setId: Int,
-    templateId: Int,
-    fromSerial: UInt64,
-    toSerial: UInt64
-  )
+  pub event NFTMinted(id: UInt64, setId: Int, templateId: Int, serial: UInt64)
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -297,18 +292,6 @@ pub contract NiftoryTemplate: NonFungibleToken {
     NiftoryNonFungibleToken.ManagerPublic,
     NiftoryNonFungibleToken.ManagerPrivate
   {
-    // Capability for MutableMetadataSetManager
-    access(self) var _setManagerCap: Capability<&
-        MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public,
-          MutableMetadataSetManager.Private
-      }>
-
-    // Capability for MetadataViewsManager
-    access(self) var _metadataViewsManagerCap: Capability<&
-        MetadataViewsManager.Manager{MetadataViewsManager.Public,
-          MetadataViewsManager.Private
-      }>
-
     // ========================================================================
     // Public
     // ========================================================================
@@ -320,84 +303,32 @@ pub contract NiftoryTemplate: NonFungibleToken {
     pub fun getSetManagerPublic():
       &MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public}
     {
-      return self._setManagerCap.borrow()!
+      return NiftoryNFTRegistry
+        .getSetManagerPublic(
+          NiftoryTemplate.REGISTRY_ADDRESS,
+          NiftoryTemplate.REGISTRY_BRAND
+        )
     }
 
     pub fun getMetadataViewsManagerPublic():
       &MetadataViewsManager.Manager{MetadataViewsManager.Public}
     {
-      return self._metadataViewsManagerCap.borrow()!
+      return NiftoryNFTRegistry
+        .getMetadataViewsManagerPublic(
+          NiftoryTemplate.REGISTRY_ADDRESS,
+          NiftoryTemplate.REGISTRY_BRAND
+        )
     }
 
     pub fun getNFTCollectionData(): MetadataViews.NFTCollectionData {
-      return MetadataViews.NFTCollectionData(
-        storagePath: NiftoryTemplate.COLLECTION_STORAGE_PATH,
-        publicPath: NiftoryTemplate.COLLECTION_PUBLIC_PATH,
-        providerPath: NiftoryTemplate.COLLECTION_PRIVATE_PATH,
-        publicCollection: Type<&{
-          NonFungibleToken.CollectionPublic,
-          NiftoryNonFungibleToken.CollectionPublic
-        }>(),
-        publicLinkedType: Type<&{
-          NonFungibleToken.Receiver,
-          NonFungibleToken.CollectionPublic,
-          MetadataViews.ResolverCollection,
-          NiftoryNonFungibleToken.CollectionPublic
-        }>(),
-        providerLinkedType: Type<&{
-          NonFungibleToken.Provider,
-          NonFungibleToken.Receiver,
-          NonFungibleToken.CollectionPublic,
-          MetadataViews.ResolverCollection,
-          NiftoryNonFungibleToken.CollectionPublic
-        }>(),
-        createEmptyCollectionFunction:
-          fun (): @NonFungibleToken.Collection {
+      return NiftoryNFTRegistry
+        .buildNFTCollectionData(
+          NiftoryTemplate.REGISTRY_ADDRESS,
+          NiftoryTemplate.REGISTRY_BRAND,
+          (fun (): @NonFungibleToken.Collection {
             return <-NiftoryTemplate.createEmptyCollection()
-          }
-      )
-    }
-
-    // ========================================================================
-    // Helper accessors
-    // ========================================================================
-
-    access(self) fun _getMetadataViewsManagerPrivate():
-      &MetadataViewsManager.Manager{MetadataViewsManager.Private}
-    {
-      return self._metadataViewsManagerCap.borrow()!
-    }
-
-    access(self) fun _getSetManagerPrivate():
-      &MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public,
-        MutableMetadataSetManager.Private
-      }
-    {
-      return self._setManagerCap.borrow()!
-    }
-
-    access(self) fun _getSetMutable(_ setId: Int):
-      &MutableMetadataSet.Set{MutableMetadataSet.Private,
-        MutableMetadataSet.Public
-      }
-    {
-      return self._getSetManagerPrivate().getSetMutable(setId)
-    }
-
-    access(self) fun _getTemplateMutable(_ setId: Int, _ templateId: Int):
-      &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public,
-        MutableMetadataTemplate.Private
-      }
-    {
-      return self._getSetMutable(setId).getTemplateMutable(templateId)
-    }
-
-    access(self) fun _getNFTMetadata(_ setId: Int, _ templateId: Int):
-      &MutableMetadata.Metadata{MutableMetadata.Public,
-        MutableMetadata.Private
-      }
-    {
-      return self._getTemplateMutable(setId, templateId).metadataMutable()
+          })
+        )
     }
 
     // ========================================================================
@@ -406,7 +337,12 @@ pub contract NiftoryTemplate: NonFungibleToken {
 
     pub fun modifyContractMetadata(): auth &AnyStruct {
       emit ContractMetadataUpdated()
-      return &NiftoryTemplate.metadata as auth &AnyStruct
+      let maybeMetadata = NiftoryTemplate.metadata
+      if maybeMetadata == nil {
+        let blankMetadata: {String: String} = {}
+        NiftoryTemplate.metadata = blankMetadata
+      }
+      return (&NiftoryTemplate.metadata as auth &AnyStruct?)!
     }
 
     pub fun replaceContractMetadata(_ metadata: AnyStruct?) {
@@ -417,6 +353,22 @@ pub contract NiftoryTemplate: NonFungibleToken {
     // ========================================================================
     // Metadata Views Manager
     // ========================================================================
+
+    access(self) fun _getMetadataViewsManagerPrivate():
+      &MetadataViewsManager.Manager{MetadataViewsManager.Private}
+    {
+      let record =
+        NiftoryNFTRegistry.getRegistryRecord(
+          NiftoryTemplate.REGISTRY_ADDRESS,
+          NiftoryTemplate.REGISTRY_BRAND
+        )
+      let manager =
+        NiftoryTemplate.account
+          .getCapability<&MetadataViewsManager.Manager{MetadataViewsManager.Private}>(
+            record.metadataViewsManager.paths.private
+          ).borrow()!
+      return manager
+    }
 
     pub fun lockMetadataViewsManager() {
       self._getMetadataViewsManagerPrivate().lock()
@@ -439,6 +391,22 @@ pub contract NiftoryTemplate: NonFungibleToken {
     // Set Manager
     // ========================================================================
 
+    access(self) fun _getSetManagerPrivate():
+      &MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public, MutableMetadataSetManager.Private}
+    {
+      let record =
+        NiftoryNFTRegistry.getRegistryRecord(
+          NiftoryTemplate.REGISTRY_ADDRESS,
+          NiftoryTemplate.REGISTRY_BRAND
+        )
+      let setManager =
+        NiftoryTemplate.account
+          .getCapability<&MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public, MutableMetadataSetManager.Private}>(
+            record.setManager.paths.private
+          ).borrow()!
+      return setManager
+    }
+
     pub fun setMetadataManagerName(_ name: String) {
       self._getSetManagerPrivate().setName(name)
       emit SetManagerMetadataUpdated()
@@ -459,6 +427,12 @@ pub contract NiftoryTemplate: NonFungibleToken {
     // ========================================================================
     // Set
     // ========================================================================
+
+    access(self) fun _getSetMutable(_ setId: Int):
+      &MutableMetadataSet.Set{MutableMetadataSet.Private,
+        MutableMetadataSet.Public} {
+      return self._getSetManagerPrivate().getSetMutable(setId)
+    }
 
     pub fun lockSet(setId: Int) {
       self._getSetMutable(setId).lock()
@@ -486,7 +460,7 @@ pub contract NiftoryTemplate: NonFungibleToken {
     ) {
       let set = self._getSetMutable(setId)
       let templateId = set.numTemplates()
-      self._getSetMutable(setId).addTemplate(<-template)
+      set.addTemplate(<-template)
       emit TemplateAddedToSet(setId: setId, templateId: templateId)
     }
 
@@ -494,18 +468,24 @@ pub contract NiftoryTemplate: NonFungibleToken {
     // Minting
     // ========================================================================
 
+    access(self) fun _getTemplateMutable(_ setId: Int, _ templateId: Int):
+      &MutableMetadataTemplate.Template{MutableMetadataTemplate.Public,
+        MutableMetadataTemplate.Private} {
+      return self._getSetMutable(setId).getTemplateMutable(templateId)
+    }
+
     pub fun lockTemplate(setId: Int, templateId: Int) {
-      emit TemplateLocked(setId: setId, templateId: templateId)
       self._getTemplateMutable(setId, templateId).lock()
+      emit TemplateLocked(setId: setId, templateId: templateId)
     }
 
     pub fun setTemplateMaxMint(setId: Int, templateId: Int, max: UInt64) {
+      self._getTemplateMutable(setId, templateId).setMaxMint(max)
       emit TemplateMaxMintSet(
         setId: setId,
         templateId: templateId,
         maxMint: max
       )
-      self._getTemplateMutable(setId, templateId).setMaxMint(max)
     }
 
     pub fun mint(setId: Int, templateId: Int): @NonFungibleToken.NFT {
@@ -517,7 +497,12 @@ pub contract NiftoryTemplate: NonFungibleToken {
         templateId: templateId,
         serial: serial
       )
-      emit NFTMinted(setId: setId, templateId: templateId, serial: serial)
+      emit NFTMinted(
+        id: nft.id,
+        setId: setId,
+        templateId: templateId,
+        serial: serial
+      )
       return <-nft
     }
 
@@ -530,7 +515,7 @@ pub contract NiftoryTemplate: NonFungibleToken {
         numToMint > 0: "Must mint at least one NFT"
       }
       let template = self._getTemplateMutable(setId, templateId)
-      let nfts: @[NFT] <- []
+      let nfts: @[NonFungibleToken.NFT] <- []
       var leftToMint = numToMint
       while leftToMint > 0 {
         template.registerMint()
@@ -540,23 +525,28 @@ pub contract NiftoryTemplate: NonFungibleToken {
           templateId: templateId,
           serial: serial
         )
+        emit NFTMinted(
+          id: nft.id,
+          setId: setId,
+          templateId: templateId,
+          serial: serial
+        )
         nfts.append(<-nft)
         leftToMint = leftToMint - 1
       }
-      let fromSerial = (&nfts[0] as &NFT).serial
-      let toSerial = (&nfts[numToMint - 1] as &NFT).serial
-      emit NFTMintedBulk(
-        setId: setId,
-        templateId: templateId,
-        fromSerial: fromSerial,
-        toSerial: toSerial
-      )
       return <-nfts
     }
 
     // ========================================================================
     // NFT metadata
     // ========================================================================
+
+    access(self) fun _getNFTMetadata(_ setId: Int, _ templateId: Int):
+      &MutableMetadata.Metadata{MutableMetadata.Public,
+        MutableMetadata.Private
+      } {
+        return self._getTemplateMutable(setId, templateId).metadataMutable()
+    }
 
     pub fun lockNFTMetadata(setId: Int, templateId: Int) {
       self._getNFTMetadata(setId, templateId).lock()
@@ -572,24 +562,6 @@ pub contract NiftoryTemplate: NonFungibleToken {
       self._getNFTMetadata(setId, templateId).replace(new)
       emit NFTMetadataModified(setId: setId, templateId: templateId)
     }
-
-    // ========================================================================
-    // init/destroy
-    // ========================================================================
-
-    init(
-      setManagerCap: Capability<&
-        MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public,
-          MutableMetadataSetManager.Private
-      }>,
-      metadataViewsManagerCap: Capability<&
-        MetadataViewsManager.Manager{MetadataViewsManager.Public,
-          MetadataViewsManager.Private
-      }>
-    ) {
-      self._setManagerCap = setManagerCap
-      self._metadataViewsManagerCap = metadataViewsManagerCap
-    }
   }
 
   // ========================================================================
@@ -597,12 +569,187 @@ pub contract NiftoryTemplate: NonFungibleToken {
   // ========================================================================
 
   pub fun contract(): &{NiftoryNonFungibleToken.ManagerPublic} {
-      let manager = NiftoryTemplate
-        .account
-        .getCapability<&{NiftoryNonFungibleToken.ManagerPublic}>(
-          NiftoryTemplate.NFT_MANAGER_PUBLIC_PATH
+    return NiftoryNFTRegistry
+      .getNFTManagerPublic(
+        NiftoryTemplate.REGISTRY_ADDRESS,
+        NiftoryTemplate.REGISTRY_BRAND
+      )
+  }
+
+  pub fun getViews(): [Type] {
+    let possibleViews = [
+      Type<MetadataViews.NFTCollectionDisplay>(),
+      Type<MetadataViews.ExternalURL>()
+    ]
+    let views: [Type] = [Type<MetadataViews.NFTCollectionData>()]
+
+    let viewManager = self.contract().getMetadataViewsManagerPublic()
+    for view in possibleViews {
+      if viewManager.inspectView(view: view) != nil {
+        views.append(view)
+      }
+    }
+    return views
+  }
+
+  pub fun resolveView(_ view: Type): AnyStruct? {
+    let viewManager = self.contract().getMetadataViewsManagerPublic()
+    switch view {
+
+      case Type<MetadataViews.NFTCollectionData>():
+        return self.contract().getNFTCollectionData()
+
+      case Type<MetadataViews.NFTCollectionDisplay>():
+        let maybeView = viewManager.inspectView(
+          view: Type<MetadataViews.NFTCollectionDisplay>()
         )
-      return manager.borrow()!
+        if maybeView == nil {
+          return nil
+        }
+        let view = maybeView!
+
+        if view.isInstance(
+          Type<NiftoryMetadataViewsResolvers.NFTCollectionDisplayResolver>()
+        ) {
+          let resolver = view as! NiftoryMetadataViewsResolvers.NFTCollectionDisplayResolver
+
+          // External URL
+          let externalURL = MetadataViews.ExternalURL(url:
+            NiftoryMetadataViewsResolvers._prefixUri(
+              allowedPrefixes:
+                NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+              default: resolver.defaultExternalURLPrefix,
+              uri: resolver.defaultExternalURL
+            )
+          )
+
+          // Square image
+          let squareImageURL = NiftoryMetadataViewsResolvers._prefixUri(
+            allowedPrefixes:
+              NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+            default: resolver.defaultSquareImagePrefix,
+            uri: resolver.defaultSquareImage
+          )
+          let squareImageMediaType = resolver.defaultSquareImageMediaType
+          let squareImage = MetadataViews.Media(
+            file: MetadataViews.HTTPFile(url: squareImageURL),
+            mediaType: squareImageMediaType
+          )
+
+          // Banner image
+          let bannerImageURL = NiftoryMetadataViewsResolvers._prefixUri(
+            allowedPrefixes:
+              NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+            default: resolver.defaultBannerImagePrefix,
+            uri: resolver.defaultBannerImage
+          )
+          let bannerImageMediaType = resolver.defaultBannerImageMediaType
+          let bannerImage = MetadataViews.Media(
+            file: MetadataViews.HTTPFile(
+              url: bannerImageURL
+            ),
+            mediaType: bannerImageMediaType
+          )
+
+          return MetadataViews.NFTCollectionDisplay(
+            name: resolver.defaultName,
+            description: resolver.defaultDescription,
+            externalURL: externalURL,
+            squareImage: squareImage,
+            bannerImage: bannerImage,
+            socials: {}
+
+          )
+        }
+
+        if view.isInstance(
+          Type<NiftoryMetadataViewsResolvers.NFTCollectionDisplayResolverWithIpfsGateway>()
+        ) {
+          let resolver = view as! NiftoryMetadataViewsResolvers.NFTCollectionDisplayResolverWithIpfsGateway
+
+          // External URL
+          let externalURL = MetadataViews.ExternalURL(url:
+            NiftoryMetadataViewsResolvers._prefixUri(
+              allowedPrefixes:
+                NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+              default: resolver.defaultExternalURLPrefix,
+              uri: resolver.defaultExternalURL
+            )
+          )
+
+          // Square image
+          let squareImageURL = NiftoryMetadataViewsResolvers._useIpfsGateway(
+            ipfsGateway: resolver.ipfsGateway,
+            uri: NiftoryMetadataViewsResolvers._prefixUri(
+              allowedPrefixes:
+                NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+              default: resolver.defaultSquareImagePrefix,
+              uri: resolver.defaultSquareImage
+            )
+        )
+          let squareImageMediaType = resolver.defaultSquareImageMediaType
+          let squareImage = MetadataViews.Media(
+            file: MetadataViews.HTTPFile(url: squareImageURL),
+            mediaType: squareImageMediaType
+          )
+
+          // Banner image
+          let bannerImageURL = NiftoryMetadataViewsResolvers._useIpfsGateway(
+            ipfsGateway: resolver.ipfsGateway,
+            uri: NiftoryMetadataViewsResolvers._prefixUri(
+              allowedPrefixes:
+                NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+              default: resolver.defaultBannerImagePrefix,
+              uri: resolver.defaultBannerImage
+            )
+          )
+          let bannerImageMediaType = resolver.defaultBannerImageMediaType
+          let bannerImage = MetadataViews.Media(
+            file: MetadataViews.HTTPFile(
+              url: bannerImageURL
+            ),
+            mediaType: bannerImageMediaType
+          )
+
+          return MetadataViews.NFTCollectionDisplay(
+            name: resolver.defaultName,
+            description: resolver.defaultDescription,
+            externalURL: externalURL,
+            squareImage: squareImage,
+            bannerImage: bannerImage,
+            socials: {}
+          )
+        }
+
+        return nil
+
+      case Type<MetadataViews.ExternalURL>():
+        let maybeView = viewManager.inspectView(
+          view: Type<MetadataViews.ExternalURL>()
+        )
+        if maybeView == nil {
+          return nil
+        }
+        let view = maybeView!
+
+        if view.isInstance(
+          Type<NiftoryMetadataViewsResolvers.ExternalURLResolver>()
+        ) {
+          let resolver = view as! NiftoryMetadataViewsResolvers.ExternalURLResolver
+          return MetadataViews.ExternalURL(url:
+            NiftoryMetadataViewsResolvers._prefixUri(
+              allowedPrefixes:
+                NiftoryMetadataViewsResolvers.DEFAULT_ALLOWED_URI_PREFIXES(),
+              default: resolver.defaultPrefix,
+              uri: resolver.defaultURL
+            )
+          )
+        }
+
+        return nil
+      }
+      return nil
+
   }
 
   // ========================================================================
@@ -610,50 +757,169 @@ pub contract NiftoryTemplate: NonFungibleToken {
   // ========================================================================
 
   init(
-    record: NiftoryNFTRegistry.Record,
-    setManagerCap: Capability<&
-      MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public,
-        MutableMetadataSetManager.Private
-    }>,
-    metadataViewsManagerCap: Capability<&
-      MetadataViewsManager.Manager{MetadataViewsManager.Public,
-        MetadataViewsManager.Private
-    }>
+    nftManagerProxy: &{
+      NiftoryNonFungibleTokenProxy.Public,
+      NiftoryNonFungibleTokenProxy.Private
+    }
   ) {
 
-    // Collection paths iniitialization
+    let record = NiftoryNFTRegistry.generateRecord(
+      account: self.account.address,
+      project: "0xCONTRACT_PATH_NAME"
+    )
+
+    self.REGISTRY_ADDRESS = 0x1234
+    self.REGISTRY_BRAND = "0xCONTRACT_PATH_NAME"
+
     self.COLLECTION_PUBLIC_PATH = record.collectionPaths.public
     self.COLLECTION_PRIVATE_PATH = record.collectionPaths.private
     self.COLLECTION_STORAGE_PATH = record.collectionPaths.storage
 
-    // NFT Manager paths initialization
-    self.NFT_MANAGER_PUBLIC_PATH = record.nftManager.paths.public
-    self.NFT_MANAGER_PRIVATE_PATH = record.nftManager.paths.private
-    self.NFT_MANAGER_STORAGE_PATH = record.nftManager.paths.storage
-
     // No metadata to start with
-    self.metadata = {} as {String: String}
+    self.metadata = nil
 
     // Initialize the total supply to 0.
     self.totalSupply = 0
 
+    // The Manager for this NFT
+    //
     // NFT Manager storage
+    let nftManager <- create Manager()
+
+    // Save a MutableSetManager to this contract's storage, as the source of
+    // this NFT contract's metadata.
+    //
+    // MutableMetadataSetManager storage
+    self
+      .account
+      .save<@MutableMetadataSetManager.Manager>(
+        <-MutableMetadataSetManager.create(
+          name: "NiftoryTemplate",
+          description: "The set manager for NiftoryTemplate."
+        ),
+        to: record.setManager.paths.storage
+      )
+
+    // MutableMetadataSetManager public
+    self
+      .account
+      .link<&MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public}>(
+        record.setManager.paths.public,
+        target: record.setManager.paths.storage
+      )
+
+    // MutableMetadataSetManager private
+    self
+      .account
+      .link<&
+        MutableMetadataSetManager.Manager{MutableMetadataSetManager.Public,
+        MutableMetadataSetManager.Private
+      }>(
+        record.setManager.paths.private,
+        target: record.setManager.paths.storage
+      )
+
+    // Save a MetadataViewsManager to this contract's storage, which will
+    // allow observers to inspect standardized metadata through any of its
+    // configured MetadataViews resolvers.
+    //
+    // MetadataViewsManager storage
+    self
+      .account
+      .save<@MetadataViewsManager.Manager>(
+        <-MetadataViewsManager.create(),
+        to: record.metadataViewsManager.paths.storage
+      )
+
+    // MetadataViewsManager public
+    self
+      .account
+      .link<&MetadataViewsManager.Manager{MetadataViewsManager.Public}>(
+        record.metadataViewsManager.paths.public,
+        target: record.metadataViewsManager.paths.storage
+      )
+
+    // MetadataViewsManager private
+    self
+      .account
+      .link<&
+        MetadataViewsManager.Manager{MetadataViewsManager.Private,
+        MetadataViewsManager.Public
+      }>(
+        record.metadataViewsManager.paths.private,
+        target: record.metadataViewsManager.paths.storage
+      )
+
+    let contractName = "NiftoryTemplate"
+
+    // Royalties
+    let royaltiesResolver = NiftoryMetadataViewsResolvers.RoyaltiesResolver(
+        royalties: MetadataViews.Royalties([])
+    )
+    nftManager.setMetadataViewsResolver(royaltiesResolver)
+
+    // Collection Data
+    let collectionDataResolver
+        = NiftoryMetadataViewsResolvers.NFTCollectionDataResolver()
+    nftManager.setMetadataViewsResolver(collectionDataResolver)
+
+    // Display
+    let displayResolver = NiftoryMetadataViewsResolvers.DisplayResolver(
+        "title",
+        contractName.concat("NFT"),
+        "description",
+        contractName.concat(" NFT"),
+        "mediaUrl",
+        "ipfs://",
+        "ipfs://bafybeig6la3me5x3veull7jzxmwle4sfuaguou2is3o3z44ayhe7ihlqpa/NiftoryBanner.png"
+    )
+    nftManager.setMetadataViewsResolver(displayResolver)
+
+    // Collection Display
+    let collectionResolver = NiftoryMetadataViewsResolvers.NFTCollectionDisplayResolver(
+        "title",
+        contractName,
+        "description",
+        contractName.concat(" Collection"),
+        "domainUrl",
+        "https://",
+        "https://niftory.com",
+        "squareImage",
+        "ipfs://",
+        "ipfs://bafybeihc76uodw2at2xi2l5jydpvscj5ophfpqgblbrmsfpeffhcmgdtl4/squareImage.png",
+        "squareImageMediaType",
+        "image/png",
+        "bannerImage",
+        "ipfs://",
+        "ipfs://bafybeig6la3me5x3veull7jzxmwle4sfuaguou2is3o3z44ayhe7ihlqpa/NiftoryBanner.png",
+        "bannerImageMediaType",
+        "image/png",
+        []
+    )
+    nftManager.setMetadataViewsResolver(collectionResolver)
+
+    // ExternalURL
+    let externalURLResolver = NiftoryMetadataViewsResolvers.ExternalURLResolver(
+        "domainUrl",
+        "https://",
+        "https://niftory.com"
+    )
+    nftManager.setMetadataViewsResolver(externalURLResolver)
+
+    // Save NFT Manager
     self
       .account
       .save<@Manager>(
-        <-create Manager(
-          setManagerCap: setManagerCap,
-          metadataViewsManagerCap: metadataViewsManagerCap
-        ),
-        to: self.NFT_MANAGER_STORAGE_PATH
+        <-nftManager,
+        to: record.nftManager.paths.storage
       )
 
     // NFT Manager public
     self
       .account
       .link<&{NiftoryNonFungibleToken.ManagerPublic}>(
-        self.NFT_MANAGER_PUBLIC_PATH,
-        target: self.NFT_MANAGER_STORAGE_PATH
+        record.nftManager.paths.public,
+        target: record.nftManager.paths.storage
       )
 
     // NFT Manager private
@@ -663,10 +929,20 @@ pub contract NiftoryTemplate: NonFungibleToken {
         Manager{NiftoryNonFungibleToken.ManagerPublic,
         NiftoryNonFungibleToken.ManagerPrivate
       }>(
-        self.NFT_MANAGER_PRIVATE_PATH,
-        target: self.NFT_MANAGER_STORAGE_PATH
+        record.nftManager.paths.private,
+        target: record.nftManager.paths.storage
       )
 
-    emit ContractInitialized()
+      nftManagerProxy.add(
+        registryAddress: self.REGISTRY_ADDRESS,
+        brand: self.REGISTRY_BRAND,
+        cap: self.account
+              .getCapability<&{
+                NiftoryNonFungibleToken.ManagerPrivate,
+                NiftoryNonFungibleToken.ManagerPublic
+              }>(
+                record.nftManager.paths.private
+              )
+      )
   }
 }
