@@ -744,7 +744,7 @@ pub contract NiftoryMetadataViewsResolvers {
 
   // Prefix a uri with a default prefix if it does not start with any of the
   // allowed prefixes
-  access(self) fun _prefixUri(
+  pub fun _prefixUri(
     allowedPrefixes: [String],
     default: String,
     uri: String
@@ -758,7 +758,7 @@ pub contract NiftoryMetadataViewsResolvers {
   }
 
   // Use the provided IPFS gateway if the uri starts with the IPFS prefix
-  access(self) fun _useIpfsGateway(
+  pub fun _useIpfsGateway(
     ipfsGateway: String,
     uri: String
   ): String {
